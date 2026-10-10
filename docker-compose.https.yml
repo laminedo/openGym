@@ -1,0 +1,31 @@
+# HTTPS for a server on the internet (a VPS): Caddy in front of the web container. Caddy gets and
+# renews a free Let's Encrypt certificate for RP_ID on its own; ports 80 and 443 of the server have
+# to be open and RP_ID's DNS has to point at the server. docs/SELF_HOST_EASY.md walks through it, and
+# scripts/install-server.sh sets it up in one go. Started with both files:
+#   docker compose -f docker-compose.yml -f docker-compose.https.yml up -d
+# or, with COMPOSE_FILE=docker-compose.yml:docker-compose.https.yml in .env, plain `docker compose`.
+services:
+  web:
+    # Only Caddy talks to the web container: nothing listens on plain http://<server>:8080.
+    ports: !reset []
+    environment:
+      # Caddy puts the visitor's address in CF-Connecting-IP (Caddyfile), replacing anything the
+      # visitor sent, and nginx passes it on; the sign-in throttle and the activity log then see
+      # each visitor instead of Caddy's container. Safe only because nothing but Caddy reaches web.
+      - CF_CONNECTING_IP=$$http_cf_connecting_ip
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      - DOMAIN=${RP_ID:?set RP_ID in .env to your domain, e.g. gym.example.com}
+      - WEB_UPSTREAM=web:${NGINX_PORT:-80}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy-data:/data        # the certificates: keep it, or Caddy asks Let's Encrypt again
+      - ./caddy-config:/config

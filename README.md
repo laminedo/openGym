@@ -125,6 +125,12 @@ The full list of what changed release by release is in the [changelog](CHANGELOG
 
 ## Quick start
 
+> [!TIP]
+> **Want openGym on your iPhone, iPad and computer without running a server?** This copy runs
+> free on GitHub Pages with sign-in and sync through Supabase:
+> **[Start here](docs/START_HERE.md)**. To run the full server yourself instead, see
+> [the easy way](docs/SELF_HOST_EASY.md).
+
 You need [Docker](https://docs.docker.com/get-docker/) with Compose.
 
 ```bash

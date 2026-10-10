@@ -17,6 +17,7 @@ on:
       - 'frontend/**'
       - 'catalogue/**'
       - 'scripts/catalogue/**'
+      - 'api/sync-stamps.js'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -41,11 +42,18 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
         working-directory: frontend
-      - run: npm run build
+      # A fork with frontend/.env.supabase (the free setup, docs/START_HERE.md) publishes the real
+      # app instead of the demo: sign-in and sync through its own Supabase project. Upstream keeps
+      # publishing the demo.
+      - name: Build
         working-directory: frontend
-        env:
-          VITE_DEMO: '1'
-      # The 180 px stills and animations from catalogue/media, served next to the demo
+        run: |
+          if [ -f .env.supabase ] && [ "$GITHUB_REPOSITORY" != "DuarteSantos8/openGym" ]; then
+            npm run build -- --mode supabase
+          else
+            VITE_DEMO=1 npm run build
+          fi
+      # The 180 px stills and animations from catalogue/media, served next to the app
       - run: node scripts/catalogue/stage-media.mjs frontend/dist
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5

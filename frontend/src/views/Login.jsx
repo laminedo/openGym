@@ -70,6 +70,9 @@ export default function Login() {
   const config = useStore(s => s.config)
   const canGuest = guestAllowed(config)
   const pwOn = passwordOn(config)
+  // A backend with no passkeys at all (the Supabase setup, lib/backend.js): name and password are
+  // simply the way in, nothing this browser lacks — no word about passkeys anywhere.
+  const noPasskeys = config?.passkeys === false
   const register = () => useUI.getState().openSheet(close => <RegisterSheet close={close} />)
   const signIn = async () => {
     try { const u = await passkeyLogin(); setUser(u, { adopt: true }); await adoptProfile(askAddDeviceData); useUI.getState().toast(t('Welcome back, {0}', u.name)) }
@@ -113,7 +116,7 @@ export default function Login() {
       </> : pwOn ? <>
         {/* Plain http on a LAN address, or a browser without passkey support: the password is
             the way in, and the only way to create a profile from here. */}
-        <div className="card small muted" style={{ textAlign: 'start', marginBottom: 14 }}>{t("This browser doesn't support passkeys. Sign in with your name and password instead.")}</div>
+        {!noPasskeys && <div className="card small muted" style={{ textAlign: 'start', marginBottom: 14 }}>{t("This browser doesn't support passkeys. Sign in with your name and password instead.")}</div>}
         <Button variant="primary" icon="key" onClick={() => openPasswordSignIn()}>{t('Sign in with password')}</Button>
         <div style={{ height: 10 }} />
         <Button icon="plusCircle" onClick={register}>{t('Create new profile')}</Button>
@@ -124,7 +127,7 @@ export default function Login() {
         // so say that plainly instead of offering a local profile that cannot be created.
         : t("This browser doesn't support passkeys, and this instance requires an account. Try a browser or device with passkey support.")}</div>}
       {canGuest && <Button variant="ghost" className="dim" onClick={() => setGuest(true)}>{t('Continue without account')}</Button>}
-      <div className="dim small" style={{ marginTop: 26, lineHeight: 1.5 }}>{pwOn ? t('Passkeys use {0}. A password works too, where passkeys do not.', bio()) : t('Passkeys use {0}. No passwords to remember.', bio())}<br />{t('Each profile keeps its own plan, workouts & body weight.')}</div>
+      <div className="dim small" style={{ marginTop: 26, lineHeight: 1.5 }}>{noPasskeys ? null : <>{pwOn ? t('Passkeys use {0}. A password works too, where passkeys do not.', bio()) : t('Passkeys use {0}. No passwords to remember.', bio())}<br /></>}{t('Each profile keeps its own plan, workouts & body weight.')}</div>
     </div>
   )
 }

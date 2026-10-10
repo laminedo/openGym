@@ -23,6 +23,7 @@ import { t, tn, LANGS, INSTR_LANGS, EXERCISE_NAME_LANGS, baseLang, dateLocale } 
 import { effectiveLang } from '../lib/default-lang.js'
 import { DEMO, REPO } from '../lib/demo.js'
 import { MOBILE, isAndroid, shareExport, shareExportBlob, syncReminder } from '../lib/mobile.js'
+import { SUPABASE } from '../lib/backend.js'
 import { NUDGE_COPY, NUDGE_TONES, toneOf } from '../lib/nudge.js'
 import { referencedFiles } from '../lib/media-refs.js'
 import { mediaStore } from '../lib/media-store.js'
@@ -92,7 +93,7 @@ export default function Settings({ page = null, find = null, via = null }) {
   const lang = effectiveLang(S, config)
   // This profile's passkeys and the code for another device (#95). A change to them is read back
   // here and by the password row, whose "Remove" depends on there being a passkey.
-  const passkeys = usePasskeys(!!user && !MOBILE && !DEMO && (page === 'account'))
+  const passkeys = usePasskeys(!!user && !MOBILE && !DEMO && !SUPABASE && (page === 'account'))
   const [credsV, setCredsV] = useState(0)
   const credsChanged = () => { passkeys.load(); setCredsV(v => v + 1) }
   const { update, importConflict, importBackup, setUnit, resetEverything: resetAll, setUser, pullState, pushState, resetDemo } = useStore()
@@ -871,8 +872,10 @@ export default function Settings({ page = null, find = null, via = null }) {
           {user.admin && <Row icon="crown" iconTint="var(--indigo)" title={t('Admin dashboard')} accessory="chevron" onClick={() => nav('/admin')} />}
           <PasskeysRow state={passkeys.st} changed={credsChanged} />
           <DeviceLinkRow state={passkeys.st} />
-          <Row icon="qr" iconTint="var(--blue)" title={t('Pair the mobile app')} subtitle={t('Connect the openGym app on your phone to this account.')} accessory="chevron"
-            onClick={() => useUI.getState().openSheet(close => <PairSheet close={close} />)} />
+          {/* Pairing hands the phone app a session for the openGym server; the Supabase setup has
+              none — a phone opens the same web address instead (lib/backend.js). */}
+          {!SUPABASE && <Row icon="qr" iconTint="var(--blue)" title={t('Pair the mobile app')} subtitle={t('Connect the openGym app on your phone to this account.')} accessory="chevron"
+            onClick={() => useUI.getState().openSheet(close => <PairSheet close={close} />)} />}
           {pwOn && <PasswordRow version={credsV} />}
           <Row icon="signOut" iconTint="var(--red)" title={t('Sign out')} danger onClick={signOutHere} />
           <Row icon="shield" iconTint="var(--red)" title={t('Sign out everywhere')} subtitle={t('Ends this profile’s sessions on all your devices.')} danger onClick={signOutEverywhere} />

@@ -1,0 +1,9 @@
+# Used by docker-compose.https.yml. DOMAIN is RP_ID from .env.
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy {$WEB_UPSTREAM} {
+		# The visitor's own address, for openGym's sign-in throttle and activity log. Set here, so
+		# whatever a visitor puts in this header themselves is replaced.
+		header_up CF-Connecting-IP {remote_host}
+	}
+}

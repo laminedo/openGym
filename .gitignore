@@ -30,3 +30,7 @@ frontend/bundle-size.json
 
 # Local planning notes
 docs/superpowers/plans/
+
+# Caddy (docker-compose.https.yml): certificates and its own state
+caddy-data/
+caddy-config/
