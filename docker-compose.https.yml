@@ -2,7 +2,7 @@
 # renews a free Let's Encrypt certificate for RP_ID on its own; ports 80 and 443 of the server have
 # to be open and RP_ID's DNS has to point at the server. docs/START_HERE.md walks through it, and
 # scripts/install-server.sh sets it up in one go. Started with both files:
-#   docker compose -f docker-compose.yml -f docker-compose.https.yml up -d --build
+#   docker compose -f docker-compose.yml -f docker-compose.https.yml up -d
 # or, with COMPOSE_FILE=docker-compose.yml:docker-compose.https.yml in .env, plain `docker compose`.
 services:
   web:

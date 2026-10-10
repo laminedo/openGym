@@ -2241,10 +2241,4 @@ export default {
   'Your sports watch, calling you back.': '你的运动手表在叫你回来。',
   'Coach wants you back on the bar.': '教练等你回到杠铃前。',
   'Gentle, for headphones or a quiet room.': '轻柔，适合耳机或安静的房间。',
-  'Continue with Google': '使用 Google 账号继续',
-  'Google sign-in was cancelled.': '已取消 Google 登录。',
-  'Google sign-in did not work. Try again.': 'Google 登录失败，请重试。',
-  'Google account': 'Google 账号',
-  'Sign in with this Google account on your other devices and they all stay in sync.': '在你的其他设备上用这个 Google 账号登录，所有设备都会保持同步。',
-  'Google sign-in only works at this address:': 'Google 登录只能在这个网址使用：',
 }

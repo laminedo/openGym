@@ -125,17 +125,19 @@ The full list of what changed release by release is in the [changelog](CHANGELOG
 
 ## Quick start
 
+> [!TIP]
+> **Never run a server, and want openGym on your iPhone, iPad and computer?** Follow
+> **[Start here](docs/START_HERE.md)**: a small server (or your own computer), a free address, one
+> install command, and sign-in with a name and password.
+
 You need [Docker](https://docs.docker.com/get-docker/) with Compose.
 
-> [!TIP]
-> **Want it on your phone, tablet and computer with "Continue with Google"?** Follow
-> **[Start here](docs/START_HERE.md)**: a small server, a free address and one install command.
-
 ```bash
-git clone https://github.com/laminedo/openGym
+git clone https://github.com/DuarteSantos8/openGym
 cd openGym
 cp .env.example .env
-docker compose up -d --build   # builds this fork (Continue with Google is not in the prebuilt images)
+docker compose pull      # prebuilt images, amd64 + arm64 (skip this to build from source)
+docker compose up -d
 ```
 
 Open <http://localhost:8080>, tap **Create profile**, and you're in. The exercise animations are
@@ -147,10 +149,10 @@ Traefik and nginx, and there are separate guides for
 [HTTPS on a LAN](docs/SELF_HOSTING_HTTPS.md) and [Kubernetes](docs/SELF_HOSTING_KUBERNETES.md).
 
 > [!NOTE]
-> Upstream publishes prebuilt images to `ghcr.io/duartesantos8/opengym-{api,web}` and
-> `registry.gitlab.com/duartesantos8/opengym/{api,web}`. This fork's `docker-compose.yml` builds
-> from source instead (`pull_policy: build`), because those images don't have its additions
-> (Continue with Google). Either way you don't need Node on the host.
+> Images are published from the same tag to `ghcr.io/duartesantos8/opengym-{api,web}`
+> (what `docker-compose.yml` pulls) and `registry.gitlab.com/duartesantos8/opengym/{api,web}`. Swap
+> the `image:` lines if you prefer GitLab's registry, or run `docker compose up -d --build` to build
+> locally. Either way you don't need Node on the host.
 
 <details>
 <summary><b>Configuration reference</b> (all through <code>.env</code>)</summary>
@@ -170,8 +172,6 @@ Traefik and nginx, and there are separate guides for
 | `INVITE_ONLY` | Require an invite code to create a profile | *(off)* |
 | `ALLOW_GUEST` | Offer "Continue without account"; `0` requires a profile | *(on)* |
 | `PASSWORD_LOGIN` | Offer name-and-password sign-in next to passkeys | *(off)* |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Offer "Continue with Google"; both from the Google Cloud console ([docs/GOOGLE_SIGN_IN.md](docs/GOOGLE_SIGN_IN.md)) | *(off)* |
-| `GOOGLE_REDIRECT_URI` | The Google redirect address, for a subpath behind a prefix-stripping proxy | `ORIGIN` + `/api/auth/google/callback` |
 | `TRUST_PROXY` | Let the sign-in throttle read the client address from proxy headers | `1` in `docker-compose.yml` |
 | `AUDIT_LOG` | Record sign-ins and admin actions; `0` records nothing | *(on)* |
 | `AUDIT_MAX` | Events kept in the activity log; `0` for no limit | `5000` |

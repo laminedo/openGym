@@ -29,7 +29,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="stylesheet" href="styles.css?v=24">
+<link rel="stylesheet" href="styles.css?v=25">
 <script>document.documentElement.className += ' js'</script>
 <!-- Umami web analytics for opengym.ch (self-hosted, cookieless). -->
 <script defer src="https://stats.duarte-santos.ch/script.js" data-website-id="db36019e-50f4-453c-9c56-d0588aefe233"></script>
@@ -245,7 +245,7 @@ main.api-main .lead { color: var(--fg-2); max-width: 58ch; margin: 14px 0 0; fon
   <p class="api-facts">
     <span>OpenAPI 3.1.0</span>
     <span>openGym v1.4.0</span>
-    <span>71 endpoints</span>
+    <span>69 endpoints</span>
     <span>AGPL-3.0-or-later</span>
   </p>
 
@@ -332,7 +332,7 @@ main.api-main .lead { color: var(--fg-2); max-width: 58ch; margin: 14px 0 0; fon
     <span class="ep-sum">Instance configuration</span>
   </summary>
   <div class="ep-body">
-<p>The flags the login screen needs before anyone is signed in. Both reflect environment variables on the server (<code>INVITE_ONLY</code>, <code>ALLOW_GUEST</code>), and so does <code>password_login</code>, which is there only when <code>PASSWORD_LOGIN=1</code>, <code>google</code>, which is there only when Google sign-in is set up, and <code>default_lang</code>, which is there only when <code>DEFAULT_LANG</code> is set.</p>
+<p>The flags the login screen needs before anyone is signed in. Both reflect environment variables on the server (<code>INVITE_ONLY</code>, <code>ALLOW_GUEST</code>), and so does <code>password_login</code>, which is there only when <code>PASSWORD_LOGIN=1</code>, and <code>default_lang</code>, which is there only when <code>DEFAULT_LANG</code> is set.</p>
 <p><code>media</code> is there unless the instance runs with <code>MEDIA_UPLOADS=0</code>, for everybody: the caps are not a secret, and its absence is how the app knows this server does not store photos and videos at all.</p>
 <p>A caller with a valid session also gets a <code>coach</code> key: the block when the instance has the AI Coach switched on <b>and</b> a provider connected, and <code>null</code> when it has not. A caller with no session gets no key at all. The block names the provider this instance talks to, which is the same fact <code>GET /api/coach/disclosure</code> will not hand out unauthenticated.</p>
 <p>The key is always present for a session, <code>null</code> included, so a client that caches this answer can tell &quot;no Coach on this instance&quot; from &quot;you were not signed in when you asked&quot; and knows whether asking again would change it.</p>
@@ -343,7 +343,7 @@ main.api-main .lead { color: var(--fg-2); max-width: 58ch; margin: 14px 0 0; fon
     <div class="ptab">
   <div class="prow rrow">
     <span class="r-code s2">200</span>
-    <span class="p-desc">Instance flags, plus the Coach block for a signed-in caller.<span class="r-sig">{ invite_only: boolean, allow_guest: boolean, coach: object | null, password_login: always true, default_lang: string, google: always true, google_url: string, media: <a href="#schema-MediaConfig">MediaConfig</a> }</span></span>
+    <span class="p-desc">Instance flags, plus the Coach block for a signed-in caller.<span class="r-sig">{ invite_only: boolean, allow_guest: boolean, coach: object | null, password_login: always true, default_lang: string, media: <a href="#schema-MediaConfig">MediaConfig</a> }</span></span>
   </div>
     </div>
   </div>
@@ -539,81 +539,6 @@ main.api-main .lead { color: var(--fg-2); max-width: 58ch; margin: 14px 0 0; fon
   <div class="prow rrow">
     <span class="r-code s5">500</span>
     <span class="p-desc">Credential exists but its user record is missing (corrupt db).<span class="r-sig"><code>{&quot;error&quot;:&quot;user missing&quot;}</code></span></span>
-  </div>
-    </div>
-  </div>
-</details>
-
-<details class="ep" id="op-googleStart">
-  <summary>
-    <span class="m get">GET</span>
-    <span class="ep-path"><code>/api/auth/google</code><span class="ep-chip public">public</span></span>
-    <span class="ep-chev" aria-hidden="true"></span>
-    <span class="ep-sum">Start &quot;Continue with Google&quot; (browser navigation)</span>
-  </summary>
-  <div class="ep-body">
-<p>Only when the instance runs with both <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code> set; a 404 otherwise. Not a fetch: the app sends the browser here, and this answers with a redirect to Google's sign-in page (OpenID Connect authorization-code flow with PKCE, scope <code>openid email profile</code>). The OAuth <code>state</code> is also set in a ten-minute, HttpOnly, SameSite=Lax cookie (<code>gymgoogle</code>, <code>__Host-gymgoogle</code> over https), and the callback accepts only a state that comes back to the browser holding it. See docs/GOOGLE_SIGN_IN.md.</p>
-    <p class="ep-auth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>Public: no authentication required.</span></p>
-<p class="ep-h">Query parameters</p><div class="ptab">
-  <div class="prow">
-    <span class="p-name">invite</span>
-    <span class="p-type">string</span>
-    <span class="p-desc">An invite code, on an invite-only instance. Only checked, and used up, if the Google account turns out to be new here.</span>
-  </div>
-</div>
-
-    <p class="ep-h">Responses</p>
-    <div class="ptab">
-  <div class="prow rrow">
-    <span class="r-code s3">302</span>
-    <span class="p-desc">To Google's sign-in page. Sets the state cookie.</span>
-  </div>
-  <div class="prow rrow">
-    <span class="r-code s4">404</span>
-    <span class="p-desc">Google sign-in is not set up on this instance.</span>
-  </div>
-    </div>
-  </div>
-</details>
-
-<details class="ep" id="op-googleCallback">
-  <summary>
-    <span class="m get">GET</span>
-    <span class="ep-path"><code>/api/auth/google/callback</code><span class="ep-chip public">public</span></span>
-    <span class="ep-chev" aria-hidden="true"></span>
-    <span class="ep-sum">Finish &quot;Continue with Google&quot; (Google sends the browser here)</span>
-  </summary>
-  <div class="ep-body">
-<p>The redirect address registered with Google (<code>ORIGIN</code> + <code>/api/auth/google/callback</code> unless <code>GOOGLE_REDIRECT_URI</code> says otherwise). Trades <code>code</code> for an ID token at Google's token endpoint, checks its issuer, audience, expiry and nonce, and finds the profile by the Google account's <code>sub</code> — never by e-mail address. The first sign-in with a Google account makes a new profile (an invite code is needed on an invite-only instance); every later one, from any device, opens that same profile.</p>
-<p>Always answers with a redirect back to the app, carrying <code>?google=</code> and one of <code>ok</code> (signed in), <code>new</code> (profile made, signed in), <code>cancelled</code>, <code>failed</code>, <code>invite</code> (invite-only instance, no valid code) or <code>disabled</code>. <code>ok</code> and <code>new</code> also set the session cookie. The state cookie is cleared every time.</p>
-    <p class="ep-auth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>Public: no authentication required.</span></p>
-<p class="ep-h">Query parameters</p><div class="ptab">
-  <div class="prow">
-    <span class="p-name">code</span>
-    <span class="p-type">string</span>
-    <span class="p-desc"></span>
-  </div>
-  <div class="prow">
-    <span class="p-name">state<em class="p-req" title="required">required</em></span>
-    <span class="p-type">string</span>
-    <span class="p-desc"></span>
-  </div>
-  <div class="prow">
-    <span class="p-name">error</span>
-    <span class="p-type">string</span>
-    <span class="p-desc">Set by Google when the person said no.</span>
-  </div>
-</div>
-
-    <p class="ep-h">Responses</p>
-    <div class="ptab">
-  <div class="prow rrow">
-    <span class="r-code s3">302</span>
-    <span class="p-desc">Back to the app, <code>?google=&lt;result&gt;</code>.</span>
-  </div>
-  <div class="prow rrow">
-    <span class="r-code s4">404</span>
-    <span class="p-desc">Google sign-in is not set up on this instance.</span>
   </div>
     </div>
   </div>
@@ -3392,11 +3317,6 @@ main.api-main .lead { color: var(--fg-2); max-width: 58ch; margin: 14px 0 0; fon
     <span class="p-type">boolean</span>
     <span class="p-desc"></span>
   </div>
-  <div class="prow">
-    <span class="p-name">google</span>
-    <span class="p-type">string</span>
-    <span class="p-desc">/api/me only, and only on a profile that signs in with Google: that Google account's address, or an empty string when Google did not vouch for one.</span>
-  </div>
 </div>
   </div>
 </details>
@@ -5206,7 +5126,7 @@ main.api-main .lead { color: var(--fg-2); max-width: 58ch; margin: 14px 0 0; fon
   </div>
 </div></footer>
 
-<script src="site.js?v=24" defer></script>
+<script src="site.js?v=25" defer></script>
 <script>
 /* Jumping to an anchor inside a collapsed card opens the card and re-aligns, since
    the browser scrolled to where the target was while it was still collapsed. */

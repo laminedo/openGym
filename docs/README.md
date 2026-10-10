@@ -19,9 +19,8 @@ to install.
 
 | Guide | Read it when |
 |---|---|
-| [**Start here**](START_HERE.md) | You've never run a server and want openGym on your phone, tablet and computer with Google sign-in: rent a small server, get a free address, run one command |
+| [**Start here**](START_HERE.md) | You've never run a server and want openGym on your iPhone, iPad and computer: a small server or your own computer, one install command, name-and-password sign-in |
 | [Self-hosting](SELF_HOSTING.md) | You're setting up an instance. Start here: running it, passkeys and HTTPS, users, backups, updates, troubleshooting |
-| [Sign in with Google](GOOGLE_SIGN_IN.md) | You want "Continue with Google", so one Google account opens the same profile on your phone, tablet and computer |
 | [HTTPS at home](SELF_HOSTING_HTTPS.md) | You want valid certificates on your LAN without exposing the server to the internet |
 | [Kubernetes](SELF_HOSTING_KUBERNETES.md) | You run a cluster instead of Docker Compose |
 | [AI coach](AI_COACH.md) | You're deciding whether to turn the coach on, and with which provider |

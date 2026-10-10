@@ -27,7 +27,6 @@ import SyncBanner from './components/SyncBanner.jsx'
 import RestTimer from './components/RestTimer.jsx'
 import TimerFlash from './components/TimerFlash.jsx'
 import { openDeviceLinkRedeem } from './components/Passkeys.jsx'
-import { googleNotice } from './lib/google.js'
 import Login from './views/Login.jsx'
 import MobileOnboarding from './views/MobileOnboarding.jsx'
 import Home from './views/Home.jsx'
@@ -144,14 +143,6 @@ function Shell() {
     linkOffered.current = true
     openDeviceLinkRedeem()
   }, [ready, linkCode])
-  // Back from "Continue with Google" (lib/google.js): once boot knows who is here, say how it went.
-  const googleResult = useStore(s => s.googleResult)
-  useEffect(() => {
-    if (!ready || !googleResult) return
-    useStore.setState({ googleResult: '' })
-    const line = googleNotice(googleResult, useStore.getState().user)
-    if (line) useUI.getState().toast(line)
-  }, [ready, googleResult])
   useEffect(() => {
     const onScroll = () => {
       // Modals pins the body while a sheet is open; scrollY is 0 then, not a position.

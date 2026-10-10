@@ -49,10 +49,6 @@ const LABELS = {
   'auth.link.create': 'Made a one-time code for another device',
   'auth.link.ok': 'Added a device with a one-time code',
   'auth.link.fail': 'Adding a device with a code failed',
-  // "Continue with Google", where the instance has it set up. A first Google sign-in is an
-  // `auth.register.ok` with `msg` "google" instead.
-  'auth.google.ok': 'Signed in with Google',
-  'auth.google.fail': 'Google sign-in failed',
   // The owner's proof (current password or a passkey) for one of the changes below was refused.
   'auth.proof.fail': 'Confirming a change failed',
   // The password throttle paused an address; `msg` says for what (password, signup).
@@ -97,13 +93,6 @@ const REASONS = {
   'reset-invalid': 'wrong or expired reset code',
   'link-invalid': 'wrong, used or expired device code',
   'passkey-limit': 'the profile already has as many passkeys as it can hold',
-  'invite-missing': 'no invite code was given',
-  'state-mismatch': 'the Google sign-in came back to a browser or address that did not start it',
-  'state-expired': 'the Google sign-in took over 10 minutes, or the server restarted meanwhile',
-  // Google's own answer when trading the sign-in for a token failed: a set-up problem, mostly.
-  'token-invalid_client': 'Google refused the client id or secret',
-  'token-invalid_grant': 'Google refused the sign-in code (already used)',
-  'token-redirect_uri_mismatch': 'the redirect address is not the one registered with Google',
   // What an `auth.throttled` pause was for.
   'password': 'wrong passwords or reset codes',
   'signup': 'wrong invite codes on password signup',

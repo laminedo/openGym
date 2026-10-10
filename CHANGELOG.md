@@ -1,15 +1,5 @@
 # Changelog
 
-## Unreleased
-
-- **Continue with Google** (optional, off by default): set `GOOGLE_CLIENT_ID` and
-  `GOOGLE_CLIENT_SECRET` and the sign-in screen offers it next to passkeys. One Google account is
-  one profile, so signing in with it on a phone, a tablet and a computer opens the same plan and
-  history on all three. The first sign-in makes the profile and offers it what the device already
-  logged as a guest; invite codes and the first-user admin work as with passkeys. No new
-  dependency: an OpenID Connect sign-in with PKCE, done by the server. Set-up in
-  `docs/GOOGLE_SIGN_IN.md`.
-
 ## v1.4.0 (2026-10-09)
 
 The biggest update openGym has had: a new exercise database with 5,632 exercises and new

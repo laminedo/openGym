@@ -1401,12 +1401,6 @@ export const PT_BR_OVERRIDES = {
   'Your sports watch, calling you back.': 'Seu relógio esportivo chamando você de volta.',
   'Coach wants you back on the bar.': 'O coach quer você de volta na barra.',
   'Gentle, for headphones or a quiet room.': 'Suave, para fones de ouvido ou um lugar silencioso.',
-  'Continue with Google': 'Continuar com o Google',
-  'Google sign-in was cancelled.': 'O login com o Google foi cancelado.',
-  'Google sign-in did not work. Try again.': 'O login com o Google não funcionou. Tente novamente.',
-  'Google account': 'Conta do Google',
-  'Sign in with this Google account on your other devices and they all stay in sync.': 'Entre com esta conta do Google nos seus outros dispositivos e todos ficam sincronizados.',
-  'Google sign-in only works at this address:': 'O login com o Google só funciona neste endereço:',
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

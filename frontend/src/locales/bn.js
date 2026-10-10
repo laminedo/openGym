@@ -2320,10 +2320,4 @@ export default {
   'Your sports watch, calling you back.': 'আপনার স্পোর্টস ঘড়ি আপনাকে ফিরে ডাকছে।',
   'Coach wants you back on the bar.': 'কোচ আপনাকে আবার বারে চান।',
   'Gentle, for headphones or a quiet room.': 'মৃদু, হেডফোন বা শান্ত ঘরের জন্য।',
-  'Continue with Google': 'Google দিয়ে চালিয়ে যান',
-  'Google sign-in was cancelled.': 'Google সাইন-ইন বাতিল করা হয়েছে।',
-  'Google sign-in did not work. Try again.': 'Google সাইন-ইন কাজ করেনি। আবার চেষ্টা করুন।',
-  'Google account': 'Google অ্যাকাউন্ট',
-  'Sign in with this Google account on your other devices and they all stay in sync.': 'আপনার অন্য ডিভাইসগুলোতে এই Google অ্যাকাউন্ট দিয়ে সাইন ইন করুন, সবগুলো সিঙ্কে থাকবে।',
-  'Google sign-in only works at this address:': 'Google সাইন-ইন শুধু এই ঠিকানায় কাজ করে:',
 }

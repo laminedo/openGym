@@ -2241,10 +2241,4 @@ export default {
   'Your sports watch, calling you back.': 'Il tuo orologio sportivo ti richiama.',
   'Coach wants you back on the bar.': 'Il coach ti vuole di nuovo al bilanciere.',
   'Gentle, for headphones or a quiet room.': 'Delicato, per le cuffie o una stanza silenziosa.',
-  'Continue with Google': 'Continua con Google',
-  'Google sign-in was cancelled.': 'Accesso con Google annullato.',
-  'Google sign-in did not work. Try again.': 'L’accesso con Google non è riuscito. Riprova.',
-  'Google account': 'Account Google',
-  'Sign in with this Google account on your other devices and they all stay in sync.': 'Accedi con questo account Google sugli altri tuoi dispositivi e resteranno tutti sincronizzati.',
-  'Google sign-in only works at this address:': 'L’accesso con Google funziona solo a questo indirizzo:',
 }

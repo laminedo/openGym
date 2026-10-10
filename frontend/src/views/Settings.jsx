@@ -42,7 +42,6 @@ import BackupFolderRow, { useBackupFolder, autoBackupSubtitle } from '../compone
 import { ServerSyncSection, KeptChangesRows, leaveServer, connectServer, passkeySignIn } from '../components/ServerSync.jsx'
 import { passwordOn, PasswordRow, openPasswordSignIn, openPasswordRegister } from '../components/PasswordAuth.jsx'
 import { usePasskeys, PasskeysRow, DeviceLinkRow, openDeviceLinkRedeem } from '../components/Passkeys.jsx'
-import { googleOn, googleStartUrl } from '../lib/google.js'
 import { Section, Row, SelectRow, Switch, Segmented, Button, TextField, SearchField } from '../components/ui.jsx'
 import { PAGES, ROOT_GROUPS, pageVisible, searchSettings, pageTrail } from './settings-pages.js'
 
@@ -88,17 +87,12 @@ export default function Settings({ page = null, find = null, via = null }) {
   // Name-and-password sign-in, where the instance offers it (#118).
   const config = useStore(s => s.config)
   const pwOn = passwordOn(config)
-  const gOn = googleOn(config, { mobile: MOBILE })
   // What the app is showing, which for a profile that never picked a language is worked out on
   // this device rather than stored (#303).
   const lang = effectiveLang(S, config)
   // This profile's passkeys and the code for another device (#95). A change to them is read back
   // here and by the password row, whose "Remove" depends on there being a passkey.
   const passkeys = usePasskeys(!!user && !MOBILE && !DEMO && (page === 'account'))
-  // A profile that signs in with Google only — no passkey, no password to confirm a change with —
-  // has no use for the passkey and device-code rows: adding either asks for a proof it does not
-  // have. Another device of its own simply signs in with the same Google account.
-  const googleOnly = typeof user?.google === 'string' && !!passkeys.st && !passkeys.st.passkeys.length && !passkeys.st.password
   const [credsV, setCredsV] = useState(0)
   const credsChanged = () => { passkeys.load(); setCredsV(v => v + 1) }
   const { update, importConflict, importBackup, setUnit, resetEverything: resetAll, setUser, pullState, pushState, resetDemo } = useStore()
@@ -875,38 +869,30 @@ export default function Settings({ page = null, find = null, via = null }) {
             onClick={() => window.open(REPO, '_blank', 'noopener')} />
         </> : user ? <>
           {user.admin && <Row icon="crown" iconTint="var(--indigo)" title={t('Admin dashboard')} accessory="chevron" onClick={() => nav('/admin')} />}
-          {typeof user.google === 'string' && <Row icon="personCircle" iconTint="var(--blue)" title={t('Google account')}
-            subtitle={<>{user.google && <>{user.google}<br /></>}{t('Sign in with this Google account on your other devices and they all stay in sync.')}</>} />}
-          {!googleOnly && <PasskeysRow state={passkeys.st} changed={credsChanged} />}
-          {!googleOnly && <DeviceLinkRow state={passkeys.st} />}
+          <PasskeysRow state={passkeys.st} changed={credsChanged} />
+          <DeviceLinkRow state={passkeys.st} />
           <Row icon="qr" iconTint="var(--blue)" title={t('Pair the mobile app')} subtitle={t('Connect the openGym app on your phone to this account.')} accessory="chevron"
             onClick={() => useUI.getState().openSheet(close => <PairSheet close={close} />)} />
           {pwOn && <PasswordRow version={credsV} />}
           <Row icon="signOut" iconTint="var(--red)" title={t('Sign out')} danger onClick={signOutHere} />
           <Row icon="shield" iconTint="var(--red)" title={t('Sign out everywhere')} subtitle={t('Ends this profile’s sessions on all your devices.')} danger onClick={signOutEverywhere} />
           <AccountIdRow id={user.id} />
+        </> : webauthnOK() ? <>
+          <Row icon="plusCircle" iconTint="var(--acc)" title={t('Create passkey profile')} subtitle={t('Keeps your data safe and separate per person.')} accessory="chevron" onClick={registerHere} />
+          <Row icon="fingerprint" iconTint="var(--blue)" title={t('Sign in with passkey')} accessory="chevron" onClick={passkeySignIn} />
+          {/* The Login screen offers both of these; a guest who skipped it had no way to either from here. */}
+          {pwOn && <Row icon="plusCircle" iconTint="var(--orange)" title={t('Create profile with a password')} accessory="chevron" onClick={openPasswordRegister} />}
+          {pwOn && <Row icon="key" iconTint="var(--orange)" title={t('Sign in with password')} accessory="chevron" onClick={() => openPasswordSignIn()} />}
+          <Row icon="qr" iconTint="var(--blue)" title={t('Use a code from your other device')} accessory="chevron" onClick={openDeviceLinkRedeem} />
+          <KeptChangesRows />
+        </> : pwOn ? <>
+          {/* No passkeys in this browser (plain http on a LAN address, say): a password is the way in. */}
+          <Row icon="plusCircle" iconTint="var(--acc)" title={t('Create new profile')} subtitle={t('Keeps your data safe and separate per person.')} accessory="chevron" onClick={openPasswordRegister} />
+          <Row icon="key" iconTint="var(--orange)" title={t('Sign in with password')} accessory="chevron" onClick={() => openPasswordSignIn()} />
+          <KeptChangesRows />
         </> : <>
-          {/* A guest who skipped the sign-in screen can still bring this device's data into a
-              Google profile: boot offers it to the account on the way back (useStore). */}
-          {gOn && <Row icon="personCircle" iconTint="var(--blue)" title={t('Continue with Google')} accessory="chevron"
-            onClick={() => window.location.assign(googleStartUrl())} />}
-          {webauthnOK() ? <>
-            <Row icon="plusCircle" iconTint="var(--acc)" title={t('Create passkey profile')} subtitle={t('Keeps your data safe and separate per person.')} accessory="chevron" onClick={registerHere} />
-            <Row icon="fingerprint" iconTint="var(--blue)" title={t('Sign in with passkey')} accessory="chevron" onClick={passkeySignIn} />
-            {/* The Login screen offers both of these; a guest who skipped it had no way to either from here. */}
-            {pwOn && <Row icon="plusCircle" iconTint="var(--orange)" title={t('Create profile with a password')} accessory="chevron" onClick={openPasswordRegister} />}
-            {pwOn && <Row icon="key" iconTint="var(--orange)" title={t('Sign in with password')} accessory="chevron" onClick={() => openPasswordSignIn()} />}
-            <Row icon="qr" iconTint="var(--blue)" title={t('Use a code from your other device')} accessory="chevron" onClick={openDeviceLinkRedeem} />
-            <KeptChangesRows />
-          </> : pwOn ? <>
-            {/* No passkeys in this browser (plain http on a LAN address, say): a password is the way in. */}
-            <Row icon="plusCircle" iconTint="var(--acc)" title={t('Create new profile')} subtitle={t('Keeps your data safe and separate per person.')} accessory="chevron" onClick={openPasswordRegister} />
-            <Row icon="key" iconTint="var(--orange)" title={t('Sign in with password')} accessory="chevron" onClick={() => openPasswordSignIn()} />
-            <KeptChangesRows />
-          </> : <>
-            {!gOn && <Row icon="lock" iconTint="var(--grey)" title={t('Passkeys not supported in this browser.')} />}
-            <KeptChangesRows />
-          </>}
+          <Row icon="lock" iconTint="var(--grey)" title={t('Passkeys not supported in this browser.')} />
+          <KeptChangesRows />
         </>}
       </Section>}
       {/* The connection banner already says this to a guest; the line is for when it is switched

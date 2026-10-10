@@ -216,9 +216,8 @@ paths:
       description: |
         The flags the login screen needs before anyone is signed in. Both reflect
         environment variables on the server (`INVITE_ONLY`, `ALLOW_GUEST`), and so does
-        `password_login`, which is there only when `PASSWORD_LOGIN=1`, `google`, which is there
-        only when Google sign-in is set up, and `default_lang`, which is there only when
-        `DEFAULT_LANG` is set.
+        `password_login`, which is there only when `PASSWORD_LOGIN=1`, and `default_lang`,
+        which is there only when `DEFAULT_LANG` is set.
 
         `media` is there unless the instance runs with `MEDIA_UPLOADS=0`, for everybody: the
         caps are not a secret, and its absence is how the app knows this server does not
@@ -284,20 +283,6 @@ paths:
                       language tag the sign-in screen, and every profile that has never
                       picked a language in Settings, starts in. A profile's own choice
                       always wins; a tag the app has no translation for is ignored.
-                  google:
-                    type: boolean
-                    const: true
-                    description: >-
-                      Present (and true) only when the instance runs with
-                      GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET set; the client then offers
-                      "Continue with Google" (GET /api/auth/google).
-                  google_url:
-                    type: string
-                    example: https://gym.example.com/
-                    description: >-
-                      Present with `google`: the app's address that Google sends people back
-                      to. The client offers the Google button only when it is open at this
-                      origin; anywhere else the sign-in could not come back to it.
                   media:
                     $ref: '#/components/schemas/MediaConfig'
               examples:
@@ -535,68 +520,6 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
               example: { error: "user missing" }
-
-  /api/auth/google:
-    get:
-      tags: [auth]
-      operationId: googleStart
-      summary: 'Start "Continue with Google" (browser navigation)'
-      description: |
-        Only when the instance runs with both `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` set;
-        a 404 otherwise. Not a fetch: the app sends the browser here, and this answers with a
-        redirect to Google's sign-in page (OpenID Connect authorization-code flow with PKCE,
-        scope `openid email profile`). The OAuth `state` is also set in a ten-minute,
-        HttpOnly, SameSite=Lax cookie (`gymgoogle`, `__Host-gymgoogle` over https), and the
-        callback accepts only a state that comes back to the browser holding it. See
-        docs/GOOGLE_SIGN_IN.md.
-      security: []
-      parameters:
-        - name: invite
-          in: query
-          required: false
-          schema: { type: string }
-          description: >-
-            An invite code, on an invite-only instance. Only checked, and used up, if the
-            Google account turns out to be new here.
-      responses:
-        '302':
-          description: To Google's sign-in page. Sets the state cookie.
-          headers:
-            Location: { schema: { type: string }, description: 'https://accounts.google.com/o/oauth2/v2/auth?…' }
-            Set-Cookie: { schema: { type: string } }
-        '404':
-          description: Google sign-in is not set up on this instance.
-
-  /api/auth/google/callback:
-    get:
-      tags: [auth]
-      operationId: googleCallback
-      summary: 'Finish "Continue with Google" (Google sends the browser here)'
-      description: |
-        The redirect address registered with Google (`ORIGIN` + `/api/auth/google/callback`
-        unless `GOOGLE_REDIRECT_URI` says otherwise). Trades `code` for an ID token at Google's
-        token endpoint, checks its issuer, audience, expiry and nonce, and finds the profile
-        by the Google account's `sub` — never by e-mail address. The first sign-in with a Google
-        account makes a new profile (an invite code is needed on an invite-only instance);
-        every later one, from any device, opens that same profile.
-
-        Always answers with a redirect back to the app, carrying `?google=` and one of
-        `ok` (signed in), `new` (profile made, signed in), `cancelled`, `failed`, `invite`
-        (invite-only instance, no valid code) or `disabled`. `ok` and `new` also set the
-        session cookie. The state cookie is cleared every time.
-      security: []
-      parameters:
-        - { name: code, in: query, required: false, schema: { type: string } }
-        - { name: state, in: query, required: true, schema: { type: string } }
-        - { name: error, in: query, required: false, schema: { type: string }, description: 'Set by Google when the person said no.' }
-      responses:
-        '302':
-          description: Back to the app, `?google=<result>`.
-          headers:
-            Location: { schema: { type: string }, description: 'e.g. https://gym.example.com/?google=ok' }
-            Set-Cookie: { schema: { type: string }, description: 'The session cookie on ok/new; the cleared state cookie always.' }
-        '404':
-          description: Google sign-in is not set up on this instance.
 
   /api/logout:
     post:
@@ -3243,11 +3166,6 @@ components:
         id: { type: string, description: Stable user id (16 base64url chars). }
         name: { type: string }
         admin: { type: boolean }
-        google:
-          type: string
-          description: >-
-            /api/me only, and only on a profile that signs in with Google: that Google account's
-            address, or an empty string when Google did not vouch for one.
       example: { id: "Zk3q9XyPbA2LmN0v", name: "Ada", admin: false }
 
     # ------------------------------------------------------------------ WebAuthn

@@ -35,7 +35,6 @@ import { effectiveRoutineId } from './queue.js';
 import { stampPut } from './sync-stamps.js';
 import { atomicWrite as durableWrite } from './durable.js';
 import { excusedOn, nudgeFor, nudgeWindowOpen, toneOf } from './nudge.js';
-import { googleConfig, pkcePair, authUrl, exchangeCode, profileName } from './google.js';
 
 const PORT = +(process.env.PORT || 3000);
 const DATA = process.env.DATA_DIR || '/data';
@@ -690,12 +689,10 @@ const challenges = new Map(); // cid -> {kind, challenge, name?, uid?, exp}
 // for five minutes, so the Map has a ceiling: past it the oldest goes. A ceremony takes seconds,
 // so only a flood far beyond any real sign-in traffic reaches back far enough to cost one.
 const MAX_CHALLENGES = 20000;
-// `ttlMs`: five minutes for a passkey ceremony, which takes seconds; longer only for a Google
-// sign-in, which can wait on someone creating an account or typing a 2-step code (GOOGLE_STATE_MS).
-function putChallenge(data, ttlMs = 5 * 60000) {
+function putChallenge(data) {
   while (challenges.size >= MAX_CHALLENGES) challenges.delete(challenges.keys().next().value);
   const cid = crypto.randomBytes(16).toString('base64url');
-  challenges.set(cid, { ...data, exp: Date.now() + ttlMs });
+  challenges.set(cid, { ...data, exp: Date.now() + 5 * 60000 });
   return cid;
 }
 function takeChallenge(cid) {
@@ -1907,123 +1904,6 @@ function dataWritable() {
   return ok;
 }
 
-/* ---------- "Continue with Google" (optional) ----------
-   Off unless GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are both set (docs/GOOGLE_SIGN_IN.md);
-   while it is off both routes answer 404 and the app shows no Google button. What talks to Google
-   is in google.js; what is here is what it shares with the passkey routes: the challenge store,
-   the invite rules, the session cookie and the audit log.
-
-   A Google account is matched by its `sub` (user.google.sub), never by e-mail address. The first
-   sign-in with a Google account makes a new profile, under the same invite rules as any other
-   sign-up; every later one, on any device, opens that same profile — which is what lets a phone,
-   a tablet and a computer share one training history with nothing but a Google account.
-
-   The challenge's id is the OAuth `state`, and it is also put in a short cookie of its own: the
-   callback only accepts a state that comes back to the browser that started the sign-in. Without
-   that, a link to someone else's half-finished sign-in would sign this browser into *their*
-   account and file what it logs there (login CSRF, as for POST /api/login/password). The cookie is
-   SameSite=Lax because Google sends the browser back with a cross-site top-level GET, which is
-   exactly what Lax still carries. */
-const GOOGLE = googleConfig(process.env, ORIGIN);
-const GOOGLE_COOKIE = SECURE ? '__Host-gymgoogle' : 'gymgoogle';
-// How long a sign-in may stay at Google: one number for the challenge and its cookie, so the two
-// cannot drift apart. Kept in memory like every challenge, so an API restart in between ends it too.
-const GOOGLE_STATE_MS = 10 * 60000;
-const googleStateCookie = v => `${GOOGLE_COOKIE}=${v}; Path=/; Max-Age=${GOOGLE_STATE_MS / 1000}; HttpOnly;${SECURE} SameSite=Lax`;
-const googleStateGone = `${GOOGLE_COOKIE}=; Path=/; Max-Age=0; HttpOnly;${SECURE} SameSite=Lax`;
-// Said once at boot, so whoever set it up can check the address against the one they gave Google.
-if (GOOGLE) console.log(`Google sign-in on (redirect address ${GOOGLE.redirectUri})`);
-const googleUser = sub => db.users.find(u => u.google && u.google.sub === sub) || null;
-// Every way out of the callback is a page load of the app with one word saying how it went
-// (`?google=ok|new|cancelled|failed|invite|disabled`); the app reads it and takes it off the
-// address again (frontend lib/google.js).
-function googleBack(res, result, cookies = []) {
-  const to = new URL(GOOGLE.appUrl);
-  to.searchParams.set('google', result);
-  res.writeHead(302, { Location: to.href, 'Cache-Control': 'no-store', 'Set-Cookie': [googleStateGone, ...cookies] });
-  res.end();
-}
-
-const googleRoutes = {
-  // Where the "Continue with Google" button goes. `invite` carries the code of an invite-only
-  // instance through Google and back; it is only checked, and burned, once Google has said who
-  // this is and that person turns out to be new here.
-  'GET /api/auth/google': async (req, res) => {
-    const url = new URL(req.url, 'http://x');
-    const code = text(url.searchParams.get('invite')).trim().toUpperCase().slice(0, 40);
-    const { verifier, challenge } = pkcePair();
-    const nonce = crypto.randomBytes(16).toString('base64url');
-    const state = putChallenge({ kind: 'google', verifier, nonce, code }, GOOGLE_STATE_MS);
-    res.writeHead(302, {
-      Location: authUrl(GOOGLE, { state, nonce, challenge }),
-      'Cache-Control': 'no-store', 'Set-Cookie': googleStateCookie(state)
-    });
-    res.end();
-  },
-
-  'GET /api/auth/google/callback': async (req, res) => {
-    const url = new URL(req.url, 'http://x');
-    const state = text(url.searchParams.get('state'));
-    const mine = cookieValues(req, GOOGLE_COOKIE);
-    const ours = !!state && mine.length === 1 && mine[0] === state;
-    const c = ours ? takeChallenge(state) : null;
-    if (c?.kind !== 'google') {
-      // Told apart, because they are fixed differently: `state-expired` is this browser's own
-      // sign-in, gone after GOOGLE_STATE_MS or an API restart (try again); `state-mismatch` is a
-      // browser that does not hold the sign-in it brings back — the cookie was dropped, or the app
-      // was opened at another address than the one Google sends people back to (ORIGIN).
-      const why = ours && !c ? 'state-expired' : 'state-mismatch';
-      console.warn('google sign-in failed:', why);
-      auditFail(req, 'auth.google.fail', { ok: false, msg: why });
-      return googleBack(res, 'failed');
-    }
-    // `access_denied` and friends: the person closed Google's screen or said no.
-    if (url.searchParams.get('error')) return googleBack(res, 'cancelled');
-    const code = text(url.searchParams.get('code'));
-    if (!code) return googleBack(res, 'failed');
-    let who;
-    try { who = await exchangeCode(GOOGLE, { code, verifier: c.verifier, nonce: c.nonce }); }
-    catch (e) {
-      // A reason code only (google.js never puts the token or the secret in one). `token-invalid_client`
-      // is a wrong secret, `token-redirect_uri_mismatch` an address Google was not told about.
-      console.warn('google sign-in failed:', e.message);
-      auditFail(req, 'auth.google.fail', { ok: false, msg: String(e.message).slice(0, 60) });
-      return googleBack(res, 'failed');
-    }
-    // No await from here on: two callbacks for the same new Google account cannot both make it.
-    let user = googleUser(who.sub);
-    if (user) {
-      if (user.disabled) {
-        audit(req, 'auth.google.fail', { ok: false, user, msg: 'account-disabled' });
-        return googleBack(res, 'disabled');
-      }
-      if (who.email && user.google.email !== who.email) { user.google.email = who.email; saveDb(); }
-      audit(req, 'auth.google.ok', { user });
-      return googleBack(res, 'ok', sessionCookie(user));
-    }
-    let invite = null;
-    if (INVITE_ONLY) {
-      invite = db.invites.find(i => i.code === c.code && !i.usedBy && !i.revoked);
-      if (!invite) {
-        // The code itself is never recorded, as on every other sign-up route.
-        audit(req, 'auth.register.denied', { ok: false, name: who.name, msg: c.code ? 'invite-rejected' : 'invite-missing' });
-        return googleBack(res, 'invite');
-      }
-    }
-    const created = new Date().toISOString();
-    user = {
-      id: crypto.randomBytes(12).toString('base64url'), name: profileName(who), created,
-      google: { sub: who.sub, ...(who.email ? { email: who.email } : {}) }
-    };
-    if (invite) { user.invitedBy = invite.code; invite.usedBy = user.id; invite.usedAt = created; }
-    claimFirstAdmin(req, user);
-    db.users.push(user);
-    saveDb();
-    audit(req, 'auth.register.ok', { user, msg: invite ? invite.code + ' · google' : 'google' });
-    googleBack(res, 'new', sessionCookie(user));
-  }
-};
-
 const routes = {
   // 503 rather than a flag in a 200: the container healthcheck is `wget --spider`, which reads
   // the status and nothing else, and an instance that cannot write its data directory is exactly
@@ -2056,12 +1936,6 @@ const routes = {
       invite_only: INVITE_ONLY, allow_guest: ALLOW_GUEST,
       // Only when on, so an instance without passwords answers exactly as it did before (#118).
       ...(PASSWORD_LOGIN ? { password_login: true } : {}),
-      // Only when set up, like the one above: the sign-in screen shows its Google button off it.
-      // `google_url` is where Google sends people back to, so the app offers the button only when
-      // it is open at that address: anywhere else (a LAN address, 127.0.0.1, the www. twin) the
-      // sign-in could never come back to it (frontend lib/google.js). Not a secret: it is in
-      // every redirect to Google.
-      ...(GOOGLE ? { google: true, google_url: GOOGLE.appUrl } : {}),
       // Public: the sign-in screen is the first thing that reads it.
       ...(DEFAULT_LANG ? { default_lang: DEFAULT_LANG } : {}),
       // Public like the two flags above: the caps are not a secret, and the absence of the
@@ -2083,10 +1957,7 @@ const routes = {
     if (!s) return json(res, 401, { error: 'not signed in' });
     const { user } = s;
     const renew = s.bearer && s.exp - Date.now() < SESSION_DAYS * 86400000 / 2;
-    // `google`: the address of the Google account this profile signs in with ('' when Google
-    // did not vouch for one), only on a profile that has one — Settings → Account shows it.
-    const google = user.google ? { google: user.google.email || '' } : {};
-    json(res, 200, { user: { id: user.id, name: user.name, admin: isAdmin(user), ...google }, ...(renew ? { token: makeSession(user) } : {}) });
+    json(res, 200, { user: { id: user.id, name: user.name, admin: isAdmin(user) }, ...(renew ? { token: makeSession(user) } : {}) });
   },
 
   'POST /api/register/options': async (req, res) => {
@@ -2293,9 +2164,6 @@ const routes = {
 
   // Always there: more passkeys and device links need nothing an instance has to switch on.
   ...passkeyRoutes,
-
-  // Absent while GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET are not set: a plain 404, as above.
-  ...(GOOGLE ? googleRoutes : {}),
 
   // `rev` is the server's own count of writes to this profile (also stored inside the document as
   // `_rev`, so every other reader of the file — reminder tick, admin, Coach, MCP — is unaffected).

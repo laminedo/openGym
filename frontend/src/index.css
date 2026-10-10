@@ -380,14 +380,6 @@ h4.sec{
 .btn.sm .icn{font-size:16px}
 .btn.xs{padding:5px 10px;width:auto;font-size:13px;border-radius:7px;gap:4px}
 .btn:disabled{opacity:.32;pointer-events:none}
-/* "Continue with Google" (components/GoogleButton.jsx). Google's own button, not the app's: their
-   branding guidelines ask for a neutral fill with a hairline and the four-colour G, never the
-   accent — their dark variant here, their light one on the light theme. */
-.btn.google{background:#131314;color:#e3e3e3;box-shadow:inset 0 0 0 1px #8e918f;font-weight:500}
-.btn.google:active{background:#1f1f21}
-:root[data-theme="light"] .btn.google{background:#ffffff;color:#1f1f1f;box-shadow:inset 0 0 0 1px #747775}
-:root[data-theme="light"] .btn.google:active{background:#f2f2f2}
-.btn.google .g-logo{flex:none}
 .weekly-volume-toggle{padding-block:0}
 .weekly-volume-toggle .icn{transition:transform var(--fast) var(--ease)}
 .weekly-volume-toggle[aria-expanded="true"] .icn{transform:rotate(180deg)}

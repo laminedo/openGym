@@ -11,9 +11,6 @@ import { Button, Segmented } from '../components/ui.jsx'
 import { askAddDeviceData } from '../sheets.jsx'
 import { passwordOn, PasswordRegisterForm, openPasswordSignIn } from '../components/PasswordAuth.jsx'
 import { openDeviceLinkRedeem } from '../components/Passkeys.jsx'
-import GoogleButton from '../components/GoogleButton.jsx'
-import { googleOn, googleElsewhere } from '../lib/google.js'
-import { MOBILE } from '../lib/mobile.js'
 
 function RegisterSheet({ close }) {
   const { setUser, pushState, pullState, loadConfig } = useStore()
@@ -24,7 +21,6 @@ function RegisterSheet({ close }) {
   // A password is offered only where the instance allows it (#118), and is the only choice in a
   // browser that cannot make a passkey. Where both work, the passkey stays the first one.
   const pwOn = passwordOn(config)
-  const gOn = googleOn(config, { mobile: MOBILE })
   const [how, setHow] = useState(webauthnOK() ? 'passkey' : 'password')
   const ref = useRef(null)
   useEffect(() => { setTimeout(() => ref.current?.focus(), 250) }, [])
@@ -66,8 +62,6 @@ function RegisterSheet({ close }) {
     </>}
     <div style={{ height: 12 }} />
     <Button variant="primary" onClick={go}>{t('Create passkey')}</Button>
-    {/* No name to pick: the profile takes the Google account's. Only the invite code goes along. */}
-    {gOn && <><div style={{ height: 10 }} /><GoogleButton invite={code} needInvite={inviteOnly} /></>}
   </>
 }
 
@@ -76,11 +70,6 @@ export default function Login() {
   const config = useStore(s => s.config)
   const canGuest = guestAllowed(config)
   const pwOn = passwordOn(config)
-  // Google sign-in, where the server has it set up: the one way in that works the same on a
-  // phone, a tablet and a computer with nothing to carry between them but a Google account.
-  const gOn = googleOn(config, { mobile: MOBILE })
-  // Set up, but this page is not at the address Google sends people back to: say where it is.
-  const gAt = googleElsewhere(config, { mobile: MOBILE })
   const register = () => useUI.getState().openSheet(close => <RegisterSheet close={close} />)
   const signIn = async () => {
     try { const u = await passkeyLogin(); setUser(u, { adopt: true }); await adoptProfile(askAddDeviceData); useUI.getState().toast(t('Welcome back, {0}', u.name)) }
@@ -111,10 +100,6 @@ export default function Login() {
     <div className="narrow" style={wrap}>
       {head}
       <div className="muted" style={{ marginBottom: 34 }}>{t('Your workouts. Your weights. Your profile.')}</div>
-      {gOn && <><GoogleButton /><div style={{ height: 10 }} /></>}
-      {gAt && <div className="card small muted" style={{ textAlign: 'start', marginBottom: 14 }}>
-        {t('Google sign-in only works at this address:')} <a href={gAt}>{gAt.replace(/^https?:\/\//, '').replace(/\/$/, '')}</a>
-      </div>}
       {webauthnOK() ? <>
         <Button variant="primary" icon="fingerprint" onClick={signIn}>{t('Sign in with passkey')}</Button>
         <div style={{ height: 10 }} />
@@ -133,7 +118,7 @@ export default function Login() {
         <div style={{ height: 10 }} />
         <Button icon="plusCircle" onClick={register}>{t('Create new profile')}</Button>
         {canGuest && <div style={{ height: 10 }} />}
-      </> : gOn ? null : <div className="card small muted" style={{ textAlign: 'start' }}>{canGuest
+      </> : <div className="card small muted" style={{ textAlign: 'start' }}>{canGuest
         ? t("This browser doesn't do passkeys, but you can still use openGym locally on this device.")
         // Without passkeys and without the guest entrance there is no way in from this browser,
         // so say that plainly instead of offering a local profile that cannot be created.
