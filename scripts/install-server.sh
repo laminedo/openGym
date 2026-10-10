@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # openGym on a fresh internet server (a VPS) in one go: Docker, HTTPS with a free certificate, and
 # sign-in with a profile name and password (plus passkeys). Written for people who have never run a
-# server; docs/START_HERE.md is the walkthrough around it. Run it as root from this checkout:
+# server; docs/SELF_HOST_EASY.md is the walkthrough around it. Run it as root from this checkout:
 #
 #   bash scripts/install-server.sh             set up, or change the address, or update
 #   bash scripts/install-server.sh --private   then nobody new can sign up without an invite code

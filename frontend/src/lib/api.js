@@ -3,6 +3,11 @@ import { t } from './i18n-core.js'
 import { MOBILE } from './mobile.js'
 import { appBase } from './app-base.js'
 import { nativeFetch } from './capacitor-fetch.js'
+import { createSupabaseApi } from './supabase-api.js'
+import { SUPABASE } from './backend.js'
+
+// The free setup with no openGym server: api() hands every request to Supabase (lib/backend.js).
+const sbApi = SUPABASE ? createSupabaseApi({ url: import.meta.env.VITE_SUPABASE_URL, key: import.meta.env.VITE_SUPABASE_KEY }) : null
 
 export const IS_APPLE = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent)
 export const IS_ANDROID = /Android/.test(navigator.userAgent)
@@ -17,7 +22,8 @@ export const vault = () => (IS_APPLE ? t('iCloud Keychain') : IS_ANDROID ? t('Go
 // navigator.credentials: some browsers expose WebAuthn while that generic Credential Management
 // API check produces a false negative (notably Chrome on iOS). The real create/get calls still run
 // only after the user chooses a passkey action and surface any genuine browser error there.
-export const webauthnOK = () => typeof window.PublicKeyCredential !== 'undefined'
+// With Supabase there is no server to check a passkey: name and password are the way in.
+export const webauthnOK = () => !SUPABASE && typeof window.PublicKeyCredential !== 'undefined'
 
 // The paired mobile app (lib/remote.js) is the only caller of these — everywhere else stays on
 // same-origin cookies, so remoteBase/remoteToken stay empty and api() behaves exactly as before.
@@ -54,6 +60,10 @@ export async function api(path, opts) {
   // server, which answers ANY path, PUT included, with index.html and a 200, so a push "landed"
   // there and the change was marked as synced while the server never saw it. status 0, not
   // undefined: this is not "offline", and the store must not show it as such.
+  if (sbApi) {
+    const ms = timeout != null ? timeout : (init.method || 'GET').toUpperCase() === 'GET' ? TIMEOUT_GET_MS : TIMEOUT_MS
+    return bounded(signal => sbApi(path, init, signal), ms)
+  }
   if (MOBILE && !remoteBase) throw failure(t('This phone is not connected to a server.'), 'not-paired', 0)
   const headers = Object.assign({ 'Content-Type': 'application/json' }, init.headers, remoteHeaders())
   // A paired phone has an absolute base of its own; everyone else is relative to where the app
@@ -67,12 +77,16 @@ export async function api(path, opts) {
 // the store both mean the server could not be reached, and the device says it is offline instead
 // of waiting forever.
 async function request(url, init, ms) {
+  return bounded(signal => exchange(url, signal ? Object.assign({}, init, { signal }) : init), ms)
+}
+// `run(signal)`, given `ms` to answer: past that it is aborted and counts as no answer at all.
+async function bounded(run, ms) {
   const ctl = typeof AbortController === 'function' ? new AbortController() : null
   let timer = null
   const expired = new Promise((_, reject) => {
     if (ms > 0) timer = setTimeout(() => { if (ctl) ctl.abort(); reject(failure(t('The server did not answer in time.'), 'timeout')) }, ms)
   })
-  const answer = exchange(url, ctl ? Object.assign({}, init, { signal: ctl.signal }) : init)
+  const answer = run(ctl ? ctl.signal : undefined)
   answer.catch(() => {})   // it may still settle after the timeout has answered; nobody is listening then
   try { return await Promise.race([answer, expired]) }
   finally { clearTimeout(timer) }
@@ -101,7 +115,7 @@ async function exchange(url, init) {
 // origin is Capacitor's asset server, which answers every path with index.html: the phones sent
 // every "left" to https://localhost/api/activity. The api() call beside it reaches the server.
 export function beacon(path, body) {
-  if (MOBILE) return false
+  if (MOBILE || SUPABASE) return false
   try {
     if (typeof navigator === 'undefined' || typeof navigator.sendBeacon !== 'function') return false
     return !!navigator.sendBeacon(appBase().replace(/\/$/, '') + path, new Blob([JSON.stringify(body)], { type: 'application/json' }))

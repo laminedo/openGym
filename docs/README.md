@@ -19,7 +19,8 @@ to install.
 
 | Guide | Read it when |
 |---|---|
-| [**Start here**](START_HERE.md) | You've never run a server and want openGym on your iPhone, iPad and computer: a small server or your own computer, one install command, name-and-password sign-in |
+| [**Start here**](START_HERE.md) | Your openGym link: the app free on GitHub Pages, sign-in and sync through Supabase, on iPhone, iPad and computer |
+| [Run your own server, the easy way](SELF_HOST_EASY.md) | You want the full server (passkeys, notifications, photos, Coach): a rented server or your own computer, one install command |
 | [Self-hosting](SELF_HOSTING.md) | You're setting up an instance. Start here: running it, passkeys and HTTPS, users, backups, updates, troubleshooting |
 | [HTTPS at home](SELF_HOSTING_HTTPS.md) | You want valid certificates on your LAN without exposing the server to the internet |
 | [Kubernetes](SELF_HOSTING_KUBERNETES.md) | You run a cluster instead of Docker Compose |
