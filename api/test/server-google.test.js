@@ -47,8 +47,9 @@ async function startServer(t, { env = {}, users = [], invites = [] } = {}) {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gym-google-'));
   fs.writeFileSync(path.join(dataDir, 'secret'), SECRET, { mode: 0o600 });
   fs.writeFileSync(path.join(dataDir, 'db.json'), JSON.stringify({ users, creds: [], subs: [], invites }));
-  const child = spawn(process.execPath, ['server.js'], {
-    cwd: API, stdio: ['ignore', 'pipe', 'pipe'],
+  // Date.now() is the test's to move (fake-clock.mjs), for a sign-in left at Google too long.
+  const child = spawn(process.execPath, ['--import', './test/fake-clock.mjs', 'server.js'], {
+    cwd: API, stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
     env: {
       ...process.env, PORT: '0', DATA_DIR: dataDir, ORIGIN, RP_ID: 'localhost', INVITE_ONLY: '', ADMIN_UIDS: '',
       FIRST_USER_ADMIN: '', AUDIT_LOG: '1', GOOGLE_CLIENT_ID: CLIENT, GOOGLE_CLIENT_SECRET: CLIENT_SECRET,
@@ -60,6 +61,11 @@ async function startServer(t, { env = {}, users = [], invites = [] } = {}) {
   child.stderr.on('data', d => h.log += d);
   t.after(() => { child.kill('SIGKILL'); fs.rmSync(dataDir, { recursive: true, force: true }); });
   h.api = `http://127.0.0.1:${await boundPort(child, () => h.log)}`;
+  h.setNow = now => new Promise(resolve => {
+    const done = m => { if (m && m.now === now) { child.off('message', done); resolve(); } };
+    child.on('message', done);
+    child.send({ now });
+  });
   h.get = (p, cookie) => fetch(h.api + p, { redirect: 'manual', headers: cookie ? { Cookie: cookie } : {} });
   h.db = () => JSON.parse(fs.readFileSync(path.join(dataDir, 'db.json'), 'utf8'));
   h.audit = () => { try { return fs.readFileSync(path.join(dataDir, 'audit.log'), 'utf8').trim().split('\n').map(l => JSON.parse(l)); } catch { return []; } };
@@ -103,7 +109,10 @@ test('off unless both the client id and the secret are set: no routes, nothing i
 
 test('the button sends the browser to Google with PKCE, and keeps the state in a cookie of its own', async t => {
   const h = await startServer(t);
-  assert.equal((await (await h.get('/api/config')).json()).google, true);
+  const cfg = await (await h.get('/api/config')).json();
+  assert.equal(cfg.google, true);
+  // Where Google sends people back to, so the app offers the button only at that address.
+  assert.equal(cfg.google_url, ORIGIN + '/');
   const r = await h.get('/api/auth/google');
   assert.equal(r.status, 302);
   const to = new URL(r.headers.get('location'));
@@ -113,7 +122,7 @@ test('the button sends the browser to Google with PKCE, and keeps the state in a
   assert.equal(to.searchParams.get('code_challenge_method'), 'S256');
   const raw = r.headers.getSetCookie().find(c => c.startsWith('gymgoogle='));
   assert.equal(raw.split(';')[0], 'gymgoogle=' + to.searchParams.get('state'));
-  assert.match(raw, /HttpOnly/); assert.match(raw, /SameSite=Lax/); assert.match(raw, /Max-Age=600/);
+  assert.match(raw, /HttpOnly/); assert.match(raw, /SameSite=Lax/); assert.match(raw, /Max-Age=600;/);
   assert.match(h.log, /Google sign-in on \(redirect address http:\/\/localhost:8080\/api\/auth\/google\/callback\)/);
 });
 
@@ -241,4 +250,37 @@ test('FIRST_USER_ADMIN: the first profile on a fresh instance is admin when it c
   assert.equal((await me(h, r.session)).body.user.admin, true);
   const second = await signIn(h, { sub: 'g-2' });
   assert.equal((await me(h, second.session)).body.user.admin, false);
+});
+
+test('a sign-in may take up to ten minutes at Google; past that it reports itself as expired, not as forged', async t => {
+  const h = await startServer(t);
+  const t0 = Date.now();
+  // Nine minutes (a new Google account, a 2-step code): still good.
+  const slow = await h.get('/api/auth/google');
+  const slowState = new URL(slow.headers.get('location')).searchParams.get('state');
+  await h.setNow(t0 + 9 * 60000);
+  const late = await h.get(`/api/auth/google/callback?error=access_denied&state=${slowState}`, cookieOf(slow, 'gymgoogle'));
+  assert.equal(backTo(late).searchParams.get('google'), 'cancelled');
+  // Eleven minutes: gone, and said so in the log and the activity log.
+  await h.setNow(t0);
+  const start = await h.get('/api/auth/google');
+  const state = new URL(start.headers.get('location')).searchParams.get('state');
+  await h.setNow(t0 + 11 * 60000);
+  const back = await h.get(`/api/auth/google/callback?code=x&state=${state}`, cookieOf(start, 'gymgoogle'));
+  assert.equal(backTo(back).searchParams.get('google'), 'failed');
+  assert.ok(h.audit().some(e => e.ev === 'auth.google.fail' && e.msg === 'state-expired'));
+  assert.match(h.log, /google sign-in failed: state-expired/);
+  // A browser without the cookie is the other failure, and the log says that one too.
+  await h.get(`/api/auth/google/callback?code=x&state=${state}`);
+  assert.match(h.log, /google sign-in failed: state-mismatch/);
+});
+
+test('under a subpath (BASE_PATH, prefix passed through) Google sends people back under it', async t => {
+  const h = await startServer(t, { env: { BASE_PATH: '/gym' } });
+  const r = await h.get('/api/auth/google');
+  assert.equal(new URL(r.headers.get('location')).searchParams.get('redirect_uri'), ORIGIN + '/gym/api/auth/google/callback');
+  assert.equal((await (await h.get('/api/config')).json()).google_url, ORIGIN + '/gym/');
+  const done = await signIn(h);
+  assert.equal(done.result, 'new');
+  assert.equal(backTo(done.back).pathname, '/gym/');
 });

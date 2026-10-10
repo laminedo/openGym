@@ -1770,6 +1770,15 @@ export const useStore = create((set, get) => {
       return left.owed ? owedResult(left, { stashed: true }) : { owed: false }
     },
 
+    // A sign-out that could not reach the server (signOut), finished now: true once nothing is
+    // owed any more. Boot asks before anything else, and so does "Continue with Google" before it
+    // leaves for Google — after it, the logout's answer would expire the session just opened.
+    async finishOwedLogout() {
+      if (!logoutOwed()) return true
+      try { await api('/api/logout', { method: 'POST', body: '{}' }); logoutOwed(false); return true }
+      catch { return false }   // owed until it is answered
+    },
+
     // Mobile-only ("connect to my server" onboarding, see App.jsx's needsMobileOnboarding).
     // Picking local — even before there's any data — persists the choice so onboarding never
     // asks again.
@@ -1939,10 +1948,7 @@ export const useStore = create((set, get) => {
       if (!guestAllowed(cfg)) get().setGuest(false)
       // A sign-out that could not reach the server: finish it first. Still unanswered, the
       // browser stays signed out rather than adopt the session it left behind.
-      if (logoutOwed()) {
-        try { await api('/api/logout', { method: 'POST', body: '{}' }); logoutOwed(false) } catch { /* owed until it is answered */ }
-        if (logoutOwed()) { finishBoot(); return }
-      }
+      if (!(await get().finishOwedLogout())) { finishBoot(); return }
       try {
         const me = await api('/api/me')
         if (!me.user?.id) throw Object.assign(new Error('no user'), { status: 200, code: 'bad-response' })

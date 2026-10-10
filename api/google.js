@@ -30,14 +30,21 @@ const SKEW_MS = 5 * 60000;
 
 /** The instance's Google settings from the environment, or null while it is not set up. Both the
  *  client id and the secret are needed: without either, Google cannot finish a sign-in. The
- *  redirect address defaults to ORIGIN's /api/auth/google/callback; a subpath deployment whose
- *  proxy strips the prefix names its own in GOOGLE_REDIRECT_URI. `tokenUrl` exists for the tests. */
+ *  redirect address defaults to ORIGIN + BASE_PATH + /api/auth/google/callback — BASE_PATH being
+ *  the subpath the web container is served under when the proxy in front passes it through
+ *  (docs/SELF_HOSTING.md §5; the api reads the same .env). A proxy that strips the prefix leaves
+ *  no trace of it here, so that setup names its address in GOOGLE_REDIRECT_URI. `tokenUrl` exists
+ *  for the tests. */
 export function googleConfig(env, origin) {
   const clientId = String(env.GOOGLE_CLIENT_ID || '').trim();
   const clientSecret = String(env.GOOGLE_CLIENT_SECRET || '').trim();
   if (!clientId || !clientSecret) return null;
+  // Only a value the web container itself would accept (web/05-check-base-path.sh): "/gym", not
+  // "gym" or "/gym/". Anything else is ignored here rather than built into a broken address.
+  const base = String(env.BASE_PATH || '').trim();
+  const prefix = /^\/[^/]/.test(base) && !base.endsWith('/') ? base : '';
   const redirectUri = String(env.GOOGLE_REDIRECT_URI || '').trim()
-    || String(origin).replace(/\/+$/, '') + '/api/auth/google/callback';
+    || String(origin).replace(/\/+$/, '') + prefix + '/api/auth/google/callback';
   let appUrl;
   // Where the browser lands once Google is done: the app's own address, three levels above the
   // callback (…/api/auth/google/callback → …/), so a subpath deployment lands under its subpath.

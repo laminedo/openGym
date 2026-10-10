@@ -2246,4 +2246,5 @@ export default {
   'Google sign-in did not work. Try again.': 'Google ile giriş yapılamadı. Tekrar dene.',
   'Google account': 'Google hesabı',
   'Sign in with this Google account on your other devices and they all stay in sync.': 'Diğer cihazlarında da bu Google hesabıyla giriş yap, hepsi senkronize kalsın.',
+  'Google sign-in only works at this address:': 'Google ile giriş yalnızca bu adreste çalışır:',
 }

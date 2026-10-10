@@ -98,10 +98,11 @@ const REASONS = {
   'link-invalid': 'wrong, used or expired device code',
   'passkey-limit': 'the profile already has as many passkeys as it can hold',
   'invite-missing': 'no invite code was given',
-  'state-mismatch': 'the Google sign-in was started in another browser or took too long',
+  'state-mismatch': 'the Google sign-in came back to a browser or address that did not start it',
+  'state-expired': 'the Google sign-in took over 10 minutes, or the server restarted meanwhile',
   // Google's own answer when trading the sign-in for a token failed: a set-up problem, mostly.
   'token-invalid_client': 'Google refused the client id or secret',
-  'token-invalid_grant': 'Google refused the sign-in code (used or expired)',
+  'token-invalid_grant': 'Google refused the sign-in code (already used)',
   'token-redirect_uri_mismatch': 'the redirect address is not the one registered with Google',
   // What an `auth.throttled` pause was for.
   'password': 'wrong passwords or reset codes',

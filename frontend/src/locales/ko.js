@@ -2246,4 +2246,5 @@ export default {
   'Google sign-in did not work. Try again.': 'Google 로그인에 실패했습니다. 다시 시도하세요.',
   'Google account': 'Google 계정',
   'Sign in with this Google account on your other devices and they all stay in sync.': '다른 기기에서도 이 Google 계정으로 로그인하면 모두 동기화됩니다.',
+  'Google sign-in only works at this address:': 'Google 로그인은 이 주소에서만 작동합니다:',
 }

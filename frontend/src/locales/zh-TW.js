@@ -2239,4 +2239,5 @@ export default {
   'Google sign-in did not work. Try again.': 'Google 登入失敗，請再試一次。',
   'Google account': 'Google 帳戶',
   'Sign in with this Google account on your other devices and they all stay in sync.': '在你的其他裝置上用這個 Google 帳戶登入，所有裝置就會保持同步。',
+  'Google sign-in only works at this address:': 'Google 登入只能在這個網址使用：',
 }

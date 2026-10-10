@@ -690,10 +690,12 @@ const challenges = new Map(); // cid -> {kind, challenge, name?, uid?, exp}
 // for five minutes, so the Map has a ceiling: past it the oldest goes. A ceremony takes seconds,
 // so only a flood far beyond any real sign-in traffic reaches back far enough to cost one.
 const MAX_CHALLENGES = 20000;
-function putChallenge(data) {
+// `ttlMs`: five minutes for a passkey ceremony, which takes seconds; longer only for a Google
+// sign-in, which can wait on someone creating an account or typing a 2-step code (GOOGLE_STATE_MS).
+function putChallenge(data, ttlMs = 5 * 60000) {
   while (challenges.size >= MAX_CHALLENGES) challenges.delete(challenges.keys().next().value);
   const cid = crypto.randomBytes(16).toString('base64url');
-  challenges.set(cid, { ...data, exp: Date.now() + 5 * 60000 });
+  challenges.set(cid, { ...data, exp: Date.now() + ttlMs });
   return cid;
 }
 function takeChallenge(cid) {
@@ -1924,7 +1926,10 @@ function dataWritable() {
    exactly what Lax still carries. */
 const GOOGLE = googleConfig(process.env, ORIGIN);
 const GOOGLE_COOKIE = SECURE ? '__Host-gymgoogle' : 'gymgoogle';
-const googleStateCookie = v => `${GOOGLE_COOKIE}=${v}; Path=/; Max-Age=600; HttpOnly;${SECURE} SameSite=Lax`;
+// How long a sign-in may stay at Google: one number for the challenge and its cookie, so the two
+// cannot drift apart. Kept in memory like every challenge, so an API restart in between ends it too.
+const GOOGLE_STATE_MS = 10 * 60000;
+const googleStateCookie = v => `${GOOGLE_COOKIE}=${v}; Path=/; Max-Age=${GOOGLE_STATE_MS / 1000}; HttpOnly;${SECURE} SameSite=Lax`;
 const googleStateGone = `${GOOGLE_COOKIE}=; Path=/; Max-Age=0; HttpOnly;${SECURE} SameSite=Lax`;
 // Said once at boot, so whoever set it up can check the address against the one they gave Google.
 if (GOOGLE) console.log(`Google sign-in on (redirect address ${GOOGLE.redirectUri})`);
@@ -1948,7 +1953,7 @@ const googleRoutes = {
     const code = text(url.searchParams.get('invite')).trim().toUpperCase().slice(0, 40);
     const { verifier, challenge } = pkcePair();
     const nonce = crypto.randomBytes(16).toString('base64url');
-    const state = putChallenge({ kind: 'google', verifier, nonce, code });
+    const state = putChallenge({ kind: 'google', verifier, nonce, code }, GOOGLE_STATE_MS);
     res.writeHead(302, {
       Location: authUrl(GOOGLE, { state, nonce, challenge }),
       'Cache-Control': 'no-store', 'Set-Cookie': googleStateCookie(state)
@@ -1960,9 +1965,16 @@ const googleRoutes = {
     const url = new URL(req.url, 'http://x');
     const state = text(url.searchParams.get('state'));
     const mine = cookieValues(req, GOOGLE_COOKIE);
-    const c = state && mine.length === 1 && mine[0] === state ? takeChallenge(state) : null;
+    const ours = !!state && mine.length === 1 && mine[0] === state;
+    const c = ours ? takeChallenge(state) : null;
     if (c?.kind !== 'google') {
-      auditFail(req, 'auth.google.fail', { ok: false, msg: 'state-mismatch' });
+      // Told apart, because they are fixed differently: `state-expired` is this browser's own
+      // sign-in, gone after GOOGLE_STATE_MS or an API restart (try again); `state-mismatch` is a
+      // browser that does not hold the sign-in it brings back — the cookie was dropped, or the app
+      // was opened at another address than the one Google sends people back to (ORIGIN).
+      const why = ours && !c ? 'state-expired' : 'state-mismatch';
+      console.warn('google sign-in failed:', why);
+      auditFail(req, 'auth.google.fail', { ok: false, msg: why });
       return googleBack(res, 'failed');
     }
     // `access_denied` and friends: the person closed Google's screen or said no.
@@ -2045,7 +2057,11 @@ const routes = {
       // Only when on, so an instance without passwords answers exactly as it did before (#118).
       ...(PASSWORD_LOGIN ? { password_login: true } : {}),
       // Only when set up, like the one above: the sign-in screen shows its Google button off it.
-      ...(GOOGLE ? { google: true } : {}),
+      // `google_url` is where Google sends people back to, so the app offers the button only when
+      // it is open at that address: anywhere else (a LAN address, 127.0.0.1, the www. twin) the
+      // sign-in could never come back to it (frontend lib/google.js). Not a secret: it is in
+      // every redirect to Google.
+      ...(GOOGLE ? { google: true, google_url: GOOGLE.appUrl } : {}),
       // Public: the sign-in screen is the first thing that reads it.
       ...(DEFAULT_LANG ? { default_lang: DEFAULT_LANG } : {}),
       // Public like the two flags above: the caps are not a secret, and the absence of the

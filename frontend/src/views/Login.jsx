@@ -12,7 +12,7 @@ import { askAddDeviceData } from '../sheets.jsx'
 import { passwordOn, PasswordRegisterForm, openPasswordSignIn } from '../components/PasswordAuth.jsx'
 import { openDeviceLinkRedeem } from '../components/Passkeys.jsx'
 import GoogleButton from '../components/GoogleButton.jsx'
-import { googleOn } from '../lib/google.js'
+import { googleOn, googleElsewhere } from '../lib/google.js'
 import { MOBILE } from '../lib/mobile.js'
 
 function RegisterSheet({ close }) {
@@ -79,6 +79,8 @@ export default function Login() {
   // Google sign-in, where the server has it set up: the one way in that works the same on a
   // phone, a tablet and a computer with nothing to carry between them but a Google account.
   const gOn = googleOn(config, { mobile: MOBILE })
+  // Set up, but this page is not at the address Google sends people back to: say where it is.
+  const gAt = googleElsewhere(config, { mobile: MOBILE })
   const register = () => useUI.getState().openSheet(close => <RegisterSheet close={close} />)
   const signIn = async () => {
     try { const u = await passkeyLogin(); setUser(u, { adopt: true }); await adoptProfile(askAddDeviceData); useUI.getState().toast(t('Welcome back, {0}', u.name)) }
@@ -110,6 +112,9 @@ export default function Login() {
       {head}
       <div className="muted" style={{ marginBottom: 34 }}>{t('Your workouts. Your weights. Your profile.')}</div>
       {gOn && <><GoogleButton /><div style={{ height: 10 }} /></>}
+      {gAt && <div className="card small muted" style={{ textAlign: 'start', marginBottom: 14 }}>
+        {t('Google sign-in only works at this address:')} <a href={gAt}>{gAt.replace(/^https?:\/\//, '').replace(/\/$/, '')}</a>
+      </div>}
       {webauthnOK() ? <>
         <Button variant="primary" icon="fingerprint" onClick={signIn}>{t('Sign in with passkey')}</Button>
         <div style={{ height: 10 }} />

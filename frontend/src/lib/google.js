@@ -6,9 +6,25 @@
 import { appBase } from './app-base.js'
 import { t } from './i18n.js'
 
-// Only where the server has it set up (/api/config `google`). Not in the mobile app, whose
-// WebView Google refuses to sign in from; a paired phone signs in through pairing instead.
-export const googleOn = (config, { mobile = false } = {}) => !mobile && !!config?.google
+// The page's own origin, where there is one (not in the tests' node environment).
+const here = () => (typeof location !== 'undefined' ? location : null)
+const originOf = url => { try { return new URL(url).origin } catch { return '' } }
+
+// Where the server has it set up (/api/config `google`), and only at the address Google sends
+// people back to (`google_url`): opened anywhere else — a phone on http://192.168.x.x:8080, a
+// 127.0.0.1 tab, the www. twin of the domain — the sign-in would land at that other address,
+// without the cookie it started with, and fail. Not in the mobile app, whose WebView Google
+// refuses to sign in from; a paired phone signs in through pairing instead.
+export const googleOn = (config, { mobile = false, loc = here() } = {}) => {
+  if (mobile || !config?.google) return false
+  const at = originOf(config.google_url)
+  return !at || !loc?.origin || loc.origin === at
+}
+
+// The address Google sign-in works at when this page is not it, or '' — for the sign-in screen
+// to point there instead of offering a button that cannot work here.
+export const googleElsewhere = (config, { mobile = false, loc = here() } = {}) =>
+  !mobile && !!config?.google && !googleOn(config, { loc }) ? String(config.google_url || '') : ''
 
 // The button's destination: this app's own address, a subpath deployment included, plus the
 // invite code of an invite-only instance, which the server keeps until Google is done.
@@ -44,6 +60,10 @@ export const googleSignedIn = result => result === 'ok' || result === 'new'
 // in: a sign-in the server reported but boot could not see (a browser that dropped the cookie)
 // did not work, whatever the address said.
 export function googleNotice(result, user) {
+  // Already signed in, a failed or cancelled one changed nothing: it is a used-up sign-in coming
+  // back again (Back to Google's page after landing, an old tab). The button itself is only ever
+  // offered signed out.
+  if (user && (result === 'failed' || result === 'cancelled')) return ''
   if (googleSignedIn(result)) {
     if (!user) return t('Google sign-in did not work. Try again.')
     return result === 'new' ? t('Welcome, {0}', user.name) : t('Welcome back, {0}', user.name)

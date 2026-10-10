@@ -107,4 +107,18 @@ describe('boot back from Google', () => {
     expect(h.asked).toHaveLength(0)
     expect(window.location.search).toBe('')
   })
+
+  it('finishOwedLogout: a sign-out the server never answered is finished, or stays owed while unreachable', async () => {
+    localStorage.setItem('gym_logout_owed', '1')
+    api.mockImplementation(async () => { throw Object.assign(new TypeError('Failed to fetch'), { status: 0 }) })
+    expect(await useStore.getState().finishOwedLogout()).toBe(false)
+    expect(localStorage.getItem('gym_logout_owed')).toBe('1')
+    api.mockImplementation(async path => { if (path === '/api/logout') return { ok: true }; throw new Error('unexpected ' + path) })
+    expect(await useStore.getState().finishOwedLogout()).toBe(true)
+    expect(localStorage.getItem('gym_logout_owed')).toBeNull()
+    // Nothing owed: no request at all.
+    api.mockClear()
+    expect(await useStore.getState().finishOwedLogout()).toBe(true)
+    expect(api).not.toHaveBeenCalled()
+  })
 })

@@ -2257,4 +2257,5 @@ export default {
   'Google sign-in did not work. Try again.': 'เข้าสู่ระบบด้วย Google ไม่สำเร็จ ลองอีกครั้ง',
   'Google account': 'บัญชี Google',
   'Sign in with this Google account on your other devices and they all stay in sync.': 'เข้าสู่ระบบด้วยบัญชี Google นี้บนอุปกรณ์อื่นของคุณ แล้วทุกเครื่องจะซิงค์กันเสมอ',
+  'Google sign-in only works at this address:': 'การเข้าสู่ระบบด้วย Google ใช้ได้เฉพาะที่อยู่นี้:',
 }

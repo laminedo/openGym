@@ -2246,4 +2246,5 @@ export default {
   'Google sign-in did not work. Try again.': 'Google साइन-इन नहीं हो सका। फिर से कोशिश करें।',
   'Google account': 'Google खाता',
   'Sign in with this Google account on your other devices and they all stay in sync.': 'अपने दूसरे डिवाइस पर इसी Google खाते से साइन इन करें, सब सिंक में रहेंगे।',
+  'Google sign-in only works at this address:': 'Google साइन-इन सिर्फ़ इस पते पर काम करता है:',
 }

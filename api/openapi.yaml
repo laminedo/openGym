@@ -291,6 +291,13 @@ paths:
                       Present (and true) only when the instance runs with
                       GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET set; the client then offers
                       "Continue with Google" (GET /api/auth/google).
+                  google_url:
+                    type: string
+                    example: https://gym.example.com/
+                    description: >-
+                      Present with `google`: the app's address that Google sends people back
+                      to. The client offers the Google button only when it is open at this
+                      origin; anywhere else the sign-in could not come back to it.
                   media:
                     $ref: '#/components/schemas/MediaConfig'
               examples:

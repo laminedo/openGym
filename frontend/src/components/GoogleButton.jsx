@@ -1,6 +1,7 @@
 import { t } from '../lib/i18n.js'
 import { googleStartUrl } from '../lib/google.js'
 import { useUI } from '../store/useUI.js'
+import { useStore } from '../store/useStore.js'
 
 // Google's "G" in its four colours. Their branding guidelines ask a sign-in button to carry it
 // as it is — never tinted with the app's accent — next to the words "Continue with Google".
@@ -13,10 +14,14 @@ const G = <svg className="g-logo" viewBox="0 0 48 48" width="18" height="18" ari
 
 /* "Continue with Google". A page load, not a fetch: the browser goes to the server, which sends
    it on to Google and gets it back (lib/google.js). On an invite-only instance the sign-up sheet
-   passes the code it collected; `needInvite` refuses to leave without one. */
+   passes the code it collected; `needInvite` refuses to leave without one.
+
+   A sign-out the server never heard of is finished first: boot finishes it before anything else
+   (useStore), and finished then, its answer would expire the session Google just opened. */
 export default function GoogleButton({ invite = '', needInvite = false }) {
-  const go = () => {
+  const go = async () => {
     if (needInvite && !String(invite).trim()) { useUI.getState().toast(t('An invite code is required')); return }
+    if (!(await useStore.getState().finishOwedLogout())) { useUI.getState().toast(t('Offline. The server can’t be reached')); return }
     window.location.assign(googleStartUrl(invite))
   }
   return <button type="button" className="btn google" onClick={go}>{G}<span>{t('Continue with Google')}</span></button>

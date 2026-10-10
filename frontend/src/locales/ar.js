@@ -2301,4 +2301,5 @@ export default {
   'Google sign-in did not work. Try again.': 'تعذّر تسجيل الدخول عبر Google. حاول مجددًا.',
   'Google account': 'حساب Google',
   'Sign in with this Google account on your other devices and they all stay in sync.': 'سجّل الدخول بحساب Google هذا على أجهزتك الأخرى لتبقى كلها متزامنة.',
+  'Google sign-in only works at this address:': 'تسجيل الدخول عبر Google يعمل فقط على هذا العنوان:',
 }

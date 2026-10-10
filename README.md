@@ -127,12 +127,15 @@ The full list of what changed release by release is in the [changelog](CHANGELOG
 
 You need [Docker](https://docs.docker.com/get-docker/) with Compose.
 
+> [!TIP]
+> **Want it on your phone, tablet and computer with "Continue with Google"?** Follow
+> **[Start here](docs/START_HERE.md)**: a small server, a free address and one install command.
+
 ```bash
-git clone https://github.com/DuarteSantos8/openGym
+git clone https://github.com/laminedo/openGym
 cd openGym
 cp .env.example .env
-docker compose pull      # prebuilt images, amd64 + arm64 (skip this to build from source)
-docker compose up -d
+docker compose up -d --build   # builds this fork (Continue with Google is not in the prebuilt images)
 ```
 
 Open <http://localhost:8080>, tap **Create profile**, and you're in. The exercise animations are
@@ -144,10 +147,10 @@ Traefik and nginx, and there are separate guides for
 [HTTPS on a LAN](docs/SELF_HOSTING_HTTPS.md) and [Kubernetes](docs/SELF_HOSTING_KUBERNETES.md).
 
 > [!NOTE]
-> Images are published from the same tag to `ghcr.io/duartesantos8/opengym-{api,web}`
-> (what `docker-compose.yml` pulls) and `registry.gitlab.com/duartesantos8/opengym/{api,web}`. Swap
-> the `image:` lines if you prefer GitLab's registry, or run `docker compose up -d --build` to build
-> locally. Either way you don't need Node on the host.
+> Upstream publishes prebuilt images to `ghcr.io/duartesantos8/opengym-{api,web}` and
+> `registry.gitlab.com/duartesantos8/opengym/{api,web}`. This fork's `docker-compose.yml` builds
+> from source instead (`pull_policy: build`), because those images don't have its additions
+> (Continue with Google). Either way you don't need Node on the host.
 
 <details>
 <summary><b>Configuration reference</b> (all through <code>.env</code>)</summary>

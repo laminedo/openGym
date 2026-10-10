@@ -2249,4 +2249,5 @@ export default {
   'Google sign-in did not work. Try again.': 'A Google-bejelentkezés nem sikerült. Próbáld újra.',
   'Google account': 'Google-fiók',
   'Sign in with this Google account on your other devices and they all stay in sync.': 'Jelentkezz be ezzel a Google-fiókkal a többi eszközödön is, és mind szinkronban marad.',
+  'Google sign-in only works at this address:': 'A Google-bejelentkezés csak ezen a címen működik:',
 }

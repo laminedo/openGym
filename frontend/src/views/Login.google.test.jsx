@@ -10,11 +10,11 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
    shows it; there it is the first way in, works in a browser that cannot make a passkey, and on
    an invite-only instance the sign-up sheet sends the invite code along. */
 const mocks = vi.hoisted(() => {
-  const state = { webauthn: true, config: null, sheets: [], toasts: [], went: [] }
+  const state = { webauthn: true, config: null, sheets: [], toasts: [], went: [], logoutSettled: true }
   state.snapshot = () => ({
     config: state.config, S: {},
     setUser: vi.fn(), adoptProfile: vi.fn(), setGuest: vi.fn(), loadConfig: vi.fn(async () => state.config),
-    pushState: vi.fn(), pullState: vi.fn(),
+    pushState: vi.fn(), pullState: vi.fn(), finishOwedLogout: async () => state.logoutSettled,
   })
   return state
 })
@@ -50,7 +50,7 @@ const button = (host, text) => [...host.querySelectorAll('button')].find(b => b.
 const realLocation = window.location
 
 beforeEach(() => {
-  mocks.webauthn = true; mocks.config = null; mocks.sheets.length = 0; mocks.toasts.length = 0; mocks.went.length = 0
+  mocks.webauthn = true; mocks.config = null; mocks.sheets.length = 0; mocks.toasts.length = 0; mocks.went.length = 0; mocks.logoutSettled = true
   // The button is a page load; the test only needs to know where it would have gone.
   Object.defineProperty(window, 'location', {
     configurable: true,
@@ -68,12 +68,12 @@ describe('Login with Google sign-in', () => {
     expect(buttons(page)).not.toContain('Continue with Google')
   })
 
-  it('where it is set up, it is the first way in, and it goes to the server, not to Google directly', () => {
+  it('where it is set up, it is the first way in, and it goes to the server, not to Google directly', async () => {
     mocks.config = { google: true, allow_guest: true }
     const page = mount(<Login />)
     expect(buttons(page)[0]).toBe('Continue with Google')
     expect(buttons(page)).toContain('Sign in with passkey')
-    act(() => button(page, 'Continue with Google').click())
+    await act(async () => button(page, 'Continue with Google').click())
     expect(mocks.went).toEqual(['/api/auth/google'])
   })
 
@@ -93,13 +93,41 @@ describe('Login with Google sign-in', () => {
     const Sheet = () => mocks.sheets[0](() => {})
     const sheet = mount(<Sheet />)
     await act(async () => {})
-    act(() => button(sheet, 'Continue with Google').click())
+    await act(async () => button(sheet, 'Continue with Google').click())
     expect(mocks.went).toEqual([])
     expect(mocks.toasts).toContain('An invite code is required')
     const code = [...sheet.querySelectorAll('input')].find(i => i.placeholder === 'Invite code')
     const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set
     act(() => { setValue.call(code, 'welcome1'); code.dispatchEvent(new Event('input', { bubbles: true })) })
-    act(() => button(sheet, 'Continue with Google').click())
+    await act(async () => button(sheet, 'Continue with Google').click())
     expect(mocks.went).toEqual(['/api/auth/google?invite=WELCOME1'])
+  })
+
+  it('opened at another address than Google sends people back to, it says where instead of offering a dead button', () => {
+    mocks.webauthn = false
+    mocks.config = { google: true, google_url: 'https://gym.example.com/', allow_guest: true }
+    // The page is on a LAN address (the location stub is http://localhost).
+    const page = mount(<Login />)
+    expect(buttons(page)).not.toContain('Continue with Google')
+    expect(page.textContent).toContain('Google sign-in only works at this address:')
+    expect(page.querySelector('a[href="https://gym.example.com/"]').textContent).toBe('gym.example.com')
+    // …and the old note about this browser is back.
+    expect(page.textContent).toContain("This browser doesn't do passkeys")
+  })
+
+  it('at its own address there is no such note', () => {
+    mocks.config = { google: true, google_url: 'http://localhost/', allow_guest: true }
+    const page = mount(<Login />)
+    expect(buttons(page)[0]).toBe('Continue with Google')
+    expect(page.textContent).not.toContain('only works at this address')
+  })
+
+  it('a sign-out the server never answered is finished before leaving for Google; unreachable, it stays', async () => {
+    mocks.config = { google: true, allow_guest: true }
+    mocks.logoutSettled = false
+    const page = mount(<Login />)
+    await act(async () => button(page, 'Continue with Google').click())
+    expect(mocks.went).toEqual([])
+    expect(mocks.toasts).toContain('Offline. The server can’t be reached')
   })
 })

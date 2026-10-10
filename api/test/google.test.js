@@ -32,6 +32,18 @@ test('googleConfig: a redirect address under a subpath lands the browser back un
   assert.equal(googleConfig({ GOOGLE_CLIENT_ID: CLIENT, GOOGLE_CLIENT_SECRET: 's', GOOGLE_REDIRECT_URI: 'not a url' }, 'x'), null);
 });
 
+test('googleConfig: BASE_PATH (a subpath the proxy passes through) goes into the default address, a malformed one never', () => {
+  const base = { GOOGLE_CLIENT_ID: CLIENT, GOOGLE_CLIENT_SECRET: 's' };
+  const gym = googleConfig({ ...base, BASE_PATH: '/gym' }, 'https://example.com');
+  assert.equal(gym.redirectUri, 'https://example.com/gym/api/auth/google/callback');
+  assert.equal(gym.appUrl, 'https://example.com/gym/');
+  for (const bad of ['gym', '/gym/', '//evil.example', ' ']) {
+    assert.equal(googleConfig({ ...base, BASE_PATH: bad }, 'https://example.com').redirectUri, 'https://example.com/api/auth/google/callback', bad);
+  }
+  // Named outright, the address wins over both.
+  assert.equal(googleConfig({ ...base, BASE_PATH: '/gym', GOOGLE_REDIRECT_URI: 'https://x.example/cb/api/auth/google/callback' }, 'https://example.com').appUrl, 'https://x.example/cb/');
+});
+
 test('authUrl asks Google for an OpenID sign-in with PKCE, the state and the nonce', () => {
   const cfg = googleConfig({ GOOGLE_CLIENT_ID: CLIENT, GOOGLE_CLIENT_SECRET: 's' }, 'https://gym.example.com');
   const { verifier, challenge } = pkcePair();

@@ -2246,4 +2246,5 @@ export default {
   'Google sign-in did not work. Try again.': 'La connexion avec Google n’a pas abouti. Réessaie.',
   'Google account': 'Compte Google',
   'Sign in with this Google account on your other devices and they all stay in sync.': 'Connecte-toi avec ce compte Google sur tes autres appareils, et ils restent tous synchronisés.',
+  'Google sign-in only works at this address:': 'La connexion avec Google ne fonctionne qu’à cette adresse :',
 }

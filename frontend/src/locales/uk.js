@@ -2243,4 +2243,5 @@ export default {
   'Google sign-in did not work. Try again.': 'Не вдалося увійти через Google. Спробуй ще раз.',
   'Google account': 'Акаунт Google',
   'Sign in with this Google account on your other devices and they all stay in sync.': 'Увійди з цим акаунтом Google на інших пристроях, і всі вони залишатимуться синхронізованими.',
+  'Google sign-in only works at this address:': 'Вхід через Google працює лише за цією адресою:',
 }

@@ -13,6 +13,10 @@ services:
     build:
       context: ./api
       target: ${API_TARGET:-default}
+    # This fork's features (Continue with Google) are only in images built from this checkout:
+    # the prebuilt ghcr.io/duartesantos8 images above come from upstream, and pulling them would
+    # silently run an app without them. So `docker compose up -d` always builds from here.
+    pull_policy: build
     restart: unless-stopped
     env_file: .env
     environment:
@@ -24,6 +28,9 @@ services:
       # X-Forwarded-For / X-Real-IP with the real peer — so the sign-in throttle may count
       # requests by those headers instead of lumping everyone in as "the web container".
       - TRUST_PROXY=${TRUST_PROXY:-1}
+      # The subpath web is served under (below), when the proxy passes it through: the api builds
+      # the address Google sends people back to from ORIGIN + BASE_PATH (api/google.js).
+      - BASE_PATH=${BASE_PATH:-}
     volumes:
       - ./data:/data         # users, passkeys, per-user state, session secret — BACK THIS UP
                              # (and uploads/: the photos and videos of custom exercises)
@@ -39,6 +46,7 @@ services:
     build:
       context: .
       dockerfile: web/Dockerfile
+    pull_policy: build      # see the api service
     restart: unless-stopped
     depends_on:
       api:
