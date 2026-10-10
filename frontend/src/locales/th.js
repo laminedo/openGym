@@ -2252,4 +2252,9 @@ export default {
   'Your sports watch, calling you back.': 'นาฬิกาสปอร์ตเรียกคุณกลับมาแล้ว',
   'Coach wants you back on the bar.': 'โค้ชอยากให้คุณกลับมาที่บาร์',
   'Gentle, for headphones or a quiet room.': 'เบา ๆ สำหรับหูฟังหรือห้องที่เงียบ',
+  'Continue with Google': 'ดำเนินการต่อด้วย Google',
+  'Google sign-in was cancelled.': 'ยกเลิกการเข้าสู่ระบบด้วย Google แล้ว',
+  'Google sign-in did not work. Try again.': 'เข้าสู่ระบบด้วย Google ไม่สำเร็จ ลองอีกครั้ง',
+  'Google account': 'บัญชี Google',
+  'Sign in with this Google account on your other devices and they all stay in sync.': 'เข้าสู่ระบบด้วยบัญชี Google นี้บนอุปกรณ์อื่นของคุณ แล้วทุกเครื่องจะซิงค์กันเสมอ',
 }

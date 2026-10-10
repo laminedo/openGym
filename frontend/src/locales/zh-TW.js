@@ -2234,4 +2234,9 @@ export default {
   'Your sports watch, calling you back.': '你的運動手錶在叫你回來。',
   'Coach wants you back on the bar.': '教練等你回到槓鈴前。',
   'Gentle, for headphones or a quiet room.': '輕柔，適合耳機或安靜的房間。',
+  'Continue with Google': '使用 Google 帳戶繼續',
+  'Google sign-in was cancelled.': '已取消 Google 登入。',
+  'Google sign-in did not work. Try again.': 'Google 登入失敗，請再試一次。',
+  'Google account': 'Google 帳戶',
+  'Sign in with this Google account on your other devices and they all stay in sync.': '在你的其他裝置上用這個 Google 帳戶登入，所有裝置就會保持同步。',
 }

@@ -167,6 +167,8 @@ Traefik and nginx, and there are separate guides for
 | `INVITE_ONLY` | Require an invite code to create a profile | *(off)* |
 | `ALLOW_GUEST` | Offer "Continue without account"; `0` requires a profile | *(on)* |
 | `PASSWORD_LOGIN` | Offer name-and-password sign-in next to passkeys | *(off)* |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Offer "Continue with Google"; both from the Google Cloud console ([docs/GOOGLE_SIGN_IN.md](docs/GOOGLE_SIGN_IN.md)) | *(off)* |
+| `GOOGLE_REDIRECT_URI` | The Google redirect address, for a subpath behind a prefix-stripping proxy | `ORIGIN` + `/api/auth/google/callback` |
 | `TRUST_PROXY` | Let the sign-in throttle read the client address from proxy headers | `1` in `docker-compose.yml` |
 | `AUDIT_LOG` | Record sign-ins and admin actions; `0` records nothing | *(on)* |
 | `AUDIT_MAX` | Events kept in the activity log; `0` for no limit | `5000` |

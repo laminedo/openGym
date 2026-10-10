@@ -2241,4 +2241,9 @@ export default {
   'Your sports watch, calling you back.': 'Spor saatin seni geri çağırıyor.',
   'Coach wants you back on the bar.': 'Koç seni bara geri bekliyor.',
   'Gentle, for headphones or a quiet room.': 'Sakin, kulaklık ya da sessiz bir oda için.',
+  'Continue with Google': 'Google ile devam et',
+  'Google sign-in was cancelled.': 'Google ile giriş iptal edildi.',
+  'Google sign-in did not work. Try again.': 'Google ile giriş yapılamadı. Tekrar dene.',
+  'Google account': 'Google hesabı',
+  'Sign in with this Google account on your other devices and they all stay in sync.': 'Diğer cihazlarında da bu Google hesabıyla giriş yap, hepsi senkronize kalsın.',
 }

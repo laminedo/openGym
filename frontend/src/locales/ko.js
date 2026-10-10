@@ -2241,4 +2241,9 @@ export default {
   'Your sports watch, calling you back.': '스포츠 시계가 다시 부르고 있어요.',
   'Coach wants you back on the bar.': '코치가 바 앞으로 돌아오래요.',
   'Gentle, for headphones or a quiet room.': '이어폰이나 조용한 곳에 어울려요.',
+  'Continue with Google': 'Google 계정으로 계속하기',
+  'Google sign-in was cancelled.': 'Google 로그인이 취소되었습니다.',
+  'Google sign-in did not work. Try again.': 'Google 로그인에 실패했습니다. 다시 시도하세요.',
+  'Google account': 'Google 계정',
+  'Sign in with this Google account on your other devices and they all stay in sync.': '다른 기기에서도 이 Google 계정으로 로그인하면 모두 동기화됩니다.',
 }

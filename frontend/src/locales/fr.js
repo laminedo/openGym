@@ -2241,4 +2241,9 @@ export default {
   'Your sports watch, calling you back.': 'Ta montre de sport te rappelle.',
   'Coach wants you back on the bar.': 'Le coach te veut de retour à la barre.',
   'Gentle, for headphones or a quiet room.': 'Tout doux, pour un casque ou une pièce calme.',
+  'Continue with Google': 'Continuer avec Google',
+  'Google sign-in was cancelled.': 'Connexion avec Google annulée.',
+  'Google sign-in did not work. Try again.': 'La connexion avec Google n’a pas abouti. Réessaie.',
+  'Google account': 'Compte Google',
+  'Sign in with this Google account on your other devices and they all stay in sync.': 'Connecte-toi avec ce compte Google sur tes autres appareils, et ils restent tous synchronisés.',
 }

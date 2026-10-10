@@ -429,6 +429,14 @@ that only has a password cannot sign in.
 The mobile app keeps pairing: someone with a password signs in to the website with it and pairs
 from Settings → Account → "Pair the mobile app", as with a passkey.
 
+### Sign in with Google (optional)
+
+`GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` add a **Continue with Google** button. The first
+sign-in with a Google account makes a profile (under the same `INVITE_ONLY` and
+`FIRST_USER_ADMIN` rules as any other); every later one, on any device, opens that same profile.
+Off until both are set. Getting them from Google and the redirect address to register are in
+[Sign in with Google](GOOGLE_SIGN_IN.md).
+
 ## 5. Fitting it into an existing stack
 
 Running Kubernetes? Example manifests (Deployment, PVCs, Service, Gateway API route) are in

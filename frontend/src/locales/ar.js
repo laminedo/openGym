@@ -2296,4 +2296,9 @@ export default {
   'Your sports watch, calling you back.': 'ساعتك الرياضية تناديك للعودة.',
   'Coach wants you back on the bar.': 'المدرب يريدك أن تعود إلى البار.',
   'Gentle, for headphones or a quiet room.': 'هادئ، للسماعات أو لغرفة هادئة.',
+  'Continue with Google': 'المتابعة باستخدام Google',
+  'Google sign-in was cancelled.': 'أُلغي تسجيل الدخول عبر Google.',
+  'Google sign-in did not work. Try again.': 'تعذّر تسجيل الدخول عبر Google. حاول مجددًا.',
+  'Google account': 'حساب Google',
+  'Sign in with this Google account on your other devices and they all stay in sync.': 'سجّل الدخول بحساب Google هذا على أجهزتك الأخرى لتبقى كلها متزامنة.',
 }

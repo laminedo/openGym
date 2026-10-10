@@ -2241,4 +2241,9 @@ export default {
   'Your sports watch, calling you back.': 'आपकी स्पोर्ट्स घड़ी आपको वापस बुला रही है।',
   'Coach wants you back on the bar.': 'कोच आपको बार पर वापस चाहते हैं।',
   'Gentle, for headphones or a quiet room.': 'धीमी, हेडफ़ोन या शांत कमरे के लिए।',
+  'Continue with Google': 'Google के साथ जारी रखें',
+  'Google sign-in was cancelled.': 'Google साइन-इन रद्द कर दिया गया।',
+  'Google sign-in did not work. Try again.': 'Google साइन-इन नहीं हो सका। फिर से कोशिश करें।',
+  'Google account': 'Google खाता',
+  'Sign in with this Google account on your other devices and they all stay in sync.': 'अपने दूसरे डिवाइस पर इसी Google खाते से साइन इन करें, सब सिंक में रहेंगे।',
 }

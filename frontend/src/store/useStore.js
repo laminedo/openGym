@@ -19,6 +19,7 @@ import { countChanges, syncFingerprint } from '../lib/sync-changes.js'
 import { saveWorkoutEdit, deleteEditedWorkout } from '../lib/session-edit.js'
 import { appBase } from '../lib/app-base.js'
 import { linkTokenFromSearch, stripLinkFromUrl } from '../lib/device-link.js'
+import { googleResultFromSearch, stripGoogleFromUrl, googleSignedIn } from '../lib/google.js'
 import { loadRemote, chooseLocal, forgetRemote, connect, normalizeServerUrl, renewToken } from '../lib/remote.js'
 import { loadCfAccess } from '../lib/cf-access.js'
 import { loadCoachDevice, saveCoachDevice, coachDeviceSettings } from '../lib/coach-device.js'
@@ -1311,6 +1312,7 @@ export const useStore = create((set, get) => {
     // A one-time device-link code this page was opened with (?link=, #95), until it is redeemed.
     // Never persisted: the code is good for minutes and belongs to this one visit.
     linkCode: null,
+    googleResult: '',   // how a Google sign-in that just came back went (lib/google.js); App.jsx says it once
     // Mobile build only: how the Coach runs on this phone — { mode: 'off'|'server'|'byok',
     // provider, model, baseUrl } from lib/coach-device.js. Never the key, never a proposal.
     coachLocal: null,
@@ -1925,6 +1927,10 @@ export const useStore = create((set, get) => {
       // here for the sheet that redeems it (App.jsx, components/Passkeys.jsx).
       const linkCode = linkTokenFromSearch(window.location.search)
       if (linkCode) { stripLinkFromUrl(); set({ linkCode }) }
+      // Back from "Continue with Google": the server has already answered, with a session cookie on
+      // `ok`/`new`. Off the address at once too, so a reload does not say it again.
+      const googleResult = googleResultFromSearch(window.location.search)
+      if (googleResult) { stripGoogleFromUrl(); set({ googleResult }) }
       // Guests never authenticate, so an instance that turned guest mode off has no request to
       // refuse — the only way the switch reaches someone already inside is here, on their next
       // boot. Ending the session needs a positive `allow_guest: false`; see lib/guest.js for why
@@ -1940,7 +1946,10 @@ export const useStore = create((set, get) => {
       try {
         const me = await api('/api/me')
         if (!me.user?.id) throw Object.assign(new Error('no user'), { status: 200, code: 'bad-response' })
-        get().setUser(me.user)
+        // Just signed in with Google: the same adoption a passkey sign-in starts (Login.jsx), so
+        // what this device logged while signed out is offered to the account, not pushed over it
+        // or dropped. It runs from the adoptOwed branch below, like one left open by a reload.
+        get().setUser(me.user, googleSignedIn(googleResult) ? { adopt: true } : undefined)
         // Re-stamp the reminder's timezone on every load — keeps it correct if you're travelling,
         // without needing to revisit Settings.
         const restampTz = () => {

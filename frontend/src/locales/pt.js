@@ -2241,4 +2241,9 @@ export default {
   'Your sports watch, calling you back.': 'O teu relógio desportivo a chamar-te de volta.',
   'Coach wants you back on the bar.': 'O coach quer-te de volta à barra.',
   'Gentle, for headphones or a quiet room.': 'Suave, para auscultadores ou uma sala sossegada.',
+  'Continue with Google': 'Continuar com o Google',
+  'Google sign-in was cancelled.': 'O início de sessão com o Google foi cancelado.',
+  'Google sign-in did not work. Try again.': 'O início de sessão com o Google falhou. Tenta novamente.',
+  'Google account': 'Conta Google',
+  'Sign in with this Google account on your other devices and they all stay in sync.': 'Inicia sessão com esta conta Google nos teus outros dispositivos e ficam todos sincronizados.',
 }
